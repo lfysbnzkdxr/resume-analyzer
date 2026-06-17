@@ -11,7 +11,8 @@
 | **RAG 检索增强生成** | ChromaDB + fastembed（bge-small-zh-v1.5）本地语义检索 | 向量化选型、分块策略、混合检索 |
 | **Function Calling** | DeepSeek API 工具调用 + LangChain Tool Calling Agent | 工具定义、结构化输出、错误重试 |
 | **多 Agent 协作** | 4 个专用 Agent（提取→分析→匹配→库管理）顺序编排 | Agent 边界划分、编排模式、状态传递 |
-| **中文优化 RAG** | PyMuPDF 解析 + 中文断句切片（支持 。和句子边界） | 非结构化数据处理、跨语言检索 |
+| **中文优化 RAG** | PyMuPDF 解析 + 中文断句切片（支持 。和句子边界） + **混合检索** | 非结构化数据处理、跨语言检索 |
+| **语义+关键词混合检索** | ChromaDB 语义搜索 + BM25 关键词匹配 + RRF 融合排序 | 混合检索、MMR 去重 |
 | **Eval 评估体系** | 多维指标（skill_recall, RMSE, pass_rate）量化分析质量 | LLM 输出质量衡量、测试用例设计 |
 
 ## 技术栈
@@ -121,17 +122,17 @@ resume-analyzer/
 │   │   ├── resume_agent.py         # 简历信息提取 Agent
 │   │   ├── jd_agent.py             # 职位描述分析 Agent
 │   │   ├── matching_agent.py       # 匹配评估 Agent
-│   │   └── library_agent.py        # 简历库管理 Agent
+│   │   ├── library_agent.py        # 简历库管理 Agent
+│   │   └── utils.py                # JSON 提取工具
 │   ├── rag/
 │   │   ├── loader.py               # PDF 解析（PyMuPDF）
 │   │   ├── splitter.py             # 中文断句切片
 │   │   ├── embeddings.py           # Embedding 封装（fastembed）
-│   │   ├── vector_store.py         # ChromaDB 向量存储
+│   │   ├── vector_store.py         # ChromaDB 向量存储 + BM25 混合检索
 │   │   └── retriever.py            # 检索结果格式化
 │   ├── tools/
-│   │   ├── pdf_parser.py           # PDF 解析工具
-│   │   ├── skill_matcher.py        # 技能匹配工具
-│   │   └── search.py               # 语义检索工具
+│   │   ├── pdf_parser.py           # PDF 解析工具（@tool）
+│   │   └── skill_matcher.py        # 技能匹配工具（@tool）
 │   └── ui/
 │       ├── app.py                  # Streamlit 主应用
 │       ├── pages/
@@ -143,7 +144,7 @@ resume-analyzer/
 │           ├── suggestion_card.py  # 建议卡片组件
 │           └── resume_preview.py   # 简历预览组件
 ├── eval/
-│   ├── test_cases.py               # 测试用例数据
+│   ├── test_cases.py               # 5 个评估测试用例
 │   ├── metrics.py                  # 评估指标计算
 │   └── run_eval.py                 # 评估运行器
 ├── data/
@@ -192,6 +193,12 @@ python eval/run_eval.py
 - 主分隔符优先级：段落 > 行 > 句号 > 英文句点 > 空格
 - 500 字符块大小 + 50 字符重叠，平衡上下文完整性和检索精度
 - rfind 反向查找分割点，避免在词中间截断
+
+### 混合检索策略
+- 语义搜索使用 bge-small-zh-v1.5 向量化余弦相似度
+- 关键词搜索使用 jieba 分词 + BM25Okapi，精确匹配技能名称
+- Reciprocal Rank Fusion 融合两个结果集，`rank_constant=60`
+- MMR（λ=0.7）多样化排序，避免同一份简历的切片垄断 Top-N
 
 ### 为什么 4 个 Agent 而非 1 个？
 - 单一 Agent 做所有事：prompt 过长超出上下文、工具数量过多导致选择不准
