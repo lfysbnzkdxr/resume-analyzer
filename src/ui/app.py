@@ -15,11 +15,6 @@ def _inject_css():
     """注入 CSS 隐藏 Streamlit 内置英文 UI 元素。"""
     st.markdown("""
 <style>
-/* 隐藏右上角菜单 (Deploy, Manage app 等) */
-.stAppHeader { display: none !important; }
-header[data-testid="stHeader"] { display: none !important; }
-#MainMenu { display: none !important; }
-
 /* 隐藏 Streamlit 底部信息 */
 footer { display: none !important; }
 
