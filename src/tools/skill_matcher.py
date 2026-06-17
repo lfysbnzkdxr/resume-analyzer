@@ -1,6 +1,9 @@
 """Skill overlap calculation tool."""
 
+from langchain_core.tools import tool
 
+
+@tool
 def calculate_skill_overlap(resume_skills: list[str], jd_skills: list[str]) -> dict:
     """Calculate overlap between resume skills and JD-required skills."""
     resume_set = set(s.lower().strip() for s in resume_skills)

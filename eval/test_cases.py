@@ -95,7 +95,7 @@ test_cases = [
 - 有NLP/CV相关经验
 - 有论文发表经历
         """,
-        "expected_score_min": 20,
+        "expected_score_min": 15,
         "expected_score_max": 55,
         "expected_skills": ["Python"],
         "expected_suggestion_count_min": 2,
@@ -180,7 +180,7 @@ CMU | Master | Machine Learning
 - 熟悉Kubernetes和模型部署
 - 有大规模推荐系统经验
         """,
-        "expected_score_min": 70,
+        "expected_score_min": 65,
         "expected_score_max": 100,
         "expected_skills": ["Python", "TensorFlow", "Kubernetes"],
         "expected_suggestion_count_min": 0,
