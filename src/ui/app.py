@@ -59,10 +59,10 @@ def main():
         st.divider()
 
         api_key = st.text_input(
-            "DeepSeek API 密钥",
+            "DeepSeek API Key",
             type="password",
             value=DEEPSEEK_API_KEY,
-            help="输入你的 DeepSeek API 密钥，仅本次会话有效，不会保存到代码中",
+            help="输入你的 DeepSeek API Key，不会保存到代码中",
         )
         if api_key:
             os.environ["DEEPSEEK_API_KEY"] = api_key
@@ -76,7 +76,7 @@ def main():
         st.caption("基于 DeepSeek + RAG + 多 Agent 协作")
 
     if not api_key and not DEEPSEEK_API_KEY:
-        st.warning("请在侧边栏输入 DeepSeek API 密钥以开始使用")
+        st.warning("请在侧边栏输入 DeepSeek API Key 以开始使用")
         return
 
     if page == "single_analysis":
