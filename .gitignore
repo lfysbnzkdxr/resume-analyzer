@@ -6,3 +6,5 @@ data/chroma_db/
 data/uploads/
 *.egg-info/
 dist/
+venv/
+CLAUDE.md
