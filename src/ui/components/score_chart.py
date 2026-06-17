@@ -35,14 +35,14 @@ def _score_color(score: float) -> str:
 def display_suggestions(suggestions: list[dict]):
     """Display improvement suggestions with priority colors."""
     priority_map = {
-        "high": ("🔴", "#ef4444"),
-        "medium": ("🟡", "#eab308"),
-        "low": ("🟢", "#22c55e"),
+        "high": ("🔴", "#ef4444", "高优先级"),
+        "medium": ("🟡", "#eab308", "中优先级"),
+        "low": ("🟢", "#22c55e", "低优先级"),
     }
     for s in suggestions:
-        icon, color = priority_map.get(s.get("priority", "low"), ("⚪", "#888"))
+        icon, color, label = priority_map.get(s.get("priority", "low"), ("⚪", "#888", "未知"))
         st.markdown(
             f"<p style='color:{color};margin:4px 0;'>{icon} "
-            f"[{s.get('priority', 'low').upper()}] {s.get('content', '')}</p>",
+            f"[{label}] {s.get('content', '')}</p>",
             unsafe_allow_html=True,
         )

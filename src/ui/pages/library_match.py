@@ -26,10 +26,10 @@ def render():
             st.warning("未找到匹配的简历。请先上传简历到简历库。")
             return
 
-        st.subheader(f"Top-{len(results)} 匹配结果")
+        st.subheader(f"前 {len(results)} 名匹配结果")
 
         for rank, r in enumerate(results, 1):
-            filename = r["metadata"].get("filename", "unknown")
+            filename = r["metadata"].get("filename", "未知")
             score = r["score"]
             pct = min(int(score * 100), 100)
 

@@ -1,0 +1,11 @@
+[theme]
+base = "light"
+
+[client]
+showSidebarNavigation = false
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+# Ensure file_uploader uses Chinese labels where possible
