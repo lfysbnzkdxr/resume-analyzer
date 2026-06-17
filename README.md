@@ -2,18 +2,16 @@
 
 一个展示 **RAG + Function Calling + 多 Agent 协作 + Eval 评估** 的 AI 工程化项目。
 
-> 面向 AI 方向的简历作品，覆盖了企业面试中常见的技术深度问题。
-
 ## 技术亮点
 
-| 能力 | 具体实现 | 面试话题 |
-|------|----------|----------|
-| **RAG 检索增强生成** | ChromaDB + fastembed（bge-small-zh-v1.5）本地语义检索 | 向量化选型、分块策略、混合检索 |
-| **Function Calling** | DeepSeek API 工具调用 + LangChain Tool Calling Agent | 工具定义、结构化输出、错误重试 |
-| **多 Agent 协作** | 4 个专用 Agent（提取→分析→匹配→库管理）顺序编排 | Agent 边界划分、编排模式、状态传递 |
-| **中文优化 RAG** | PyMuPDF 解析 + 中文断句切片（支持 。和句子边界） + **混合检索** | 非结构化数据处理、跨语言检索 |
-| **语义+关键词混合检索** | ChromaDB 语义搜索 + BM25 关键词匹配 + RRF 融合排序 | 混合检索、MMR 去重 |
-| **Eval 评估体系** | 多维指标（skill_recall, RMSE, pass_rate）量化分析质量 | LLM 输出质量衡量、测试用例设计 |
+| 能力 | 具体实现 |
+|------|----------|
+| **RAG 检索增强生成** | ChromaDB + fastembed（bge-small-zh-v1.5）本地语义检索 |
+| **Function Calling** | DeepSeek API 工具调用 + LangChain Tool Calling Agent |
+| **多 Agent 协作** | 4 个专用 Agent（提取→分析→匹配→库管理）顺序编排 |
+| **中文优化 RAG** | PyMuPDF 解析 + 中文断句切片（支持 。和句子边界） + **混合检索** |
+| **语义+关键词混合检索** | ChromaDB 语义搜索 + BM25 关键词匹配 + RRF 融合排序 |
+| **Eval 评估体系** | 多维指标（skill_recall, RMSE, pass_rate）量化分析质量 |
 
 ## 技术栈
 
