@@ -1,0 +1,53 @@
+"""Streamlit main application — multi-page app."""
+
+import streamlit as st
+import os
+from src.core.config import APP_TITLE, DEEPSEEK_API_KEY
+
+PAGES = {
+    "single_analysis": "📄 单份分析",
+    "library_manage": "📚 简历库",
+    "library_match": "🔍 库匹配",
+}
+
+
+def main():
+    st.set_page_config(page_title=APP_TITLE, layout="wide")
+
+    with st.sidebar:
+        st.title(APP_TITLE)
+        st.divider()
+
+        api_key = st.text_input(
+            "DeepSeek API Key",
+            type="password",
+            value=DEEPSEEK_API_KEY,
+            help="输入你的 DeepSeek API Key，不会保存到代码中",
+        )
+        if api_key:
+            os.environ["DEEPSEEK_API_KEY"] = api_key
+
+        st.divider()
+
+        page = st.radio("导航", options=list(PAGES.keys()), format_func=lambda k: PAGES[k])
+
+        st.divider()
+        st.caption("AI 简历智能分析 v0.1")
+        st.caption("基于 DeepSeek + RAG + 多 Agent 协作")
+
+    if not api_key and not DEEPSEEK_API_KEY:
+        st.warning("请在侧边栏输入 DeepSeek API Key 以开始使用")
+        return
+
+    if page == "single_analysis":
+        from src.ui.pages.single_analysis import render as r
+    elif page == "library_manage":
+        from src.ui.pages.library_manage import render as r
+    elif page == "library_match":
+        from src.ui.pages.library_match import render as r
+
+    r()
+
+
+if __name__ == "__main__":
+    main()

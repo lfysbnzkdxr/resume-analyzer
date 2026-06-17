@@ -1,0 +1,68 @@
+"""Resume Extractor Agent — extracts structured info from a PDF resume."""
+
+import json
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+
+from src.agents.base import get_llm
+from src.tools.pdf_parser import parse_resume_pdf
+
+SYSTEM_PROMPT = """你是一个专业的简历解析助手。你的任务是从简历PDF中提取结构化信息。
+
+请使用 parse_resume_pdf 工具读取简历内容，然后提取以下JSON格式的信息：
+
+{{
+  "personal_info": {{"name": "姓名（如能找到）", "email": "邮箱", "phone": "电话"}},
+  "summary": "个人简要总结",
+  "skills": ["技能1", "技能2", ...],
+  "experience": [
+    {{"company": "公司名", "role": "职位", "duration": "时间范围", "highlights": ["要点1", "要点2"]}}
+  ],
+  "education": [
+    {{"school": "学校名", "degree": "学位", "major": "专业"}}
+  ],
+  "projects": [
+    {{"name": "项目名", "description": "描述", "technologies": ["技术栈"]}}
+  ]
+}}
+
+注意：
+- 如果某个字段找不到对应信息，使用空字符串或空列表。
+- 只返回 JSON，不要包含 markdown 代码块标记或其他说明文字。
+"""
+
+
+def create_resume_agent():
+    """Create and return a Resume Extractor agent executor."""
+    llm = get_llm()
+    tools = [parse_resume_pdf]
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT),
+        ("human", "请分析这份简历 PDF：{file_path}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ])
+
+    agent = create_tool_calling_agent(llm, tools, prompt)
+    return AgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
+
+
+def extract_resume(file_path: str) -> dict:
+    """Extract structured info from a resume PDF. Returns a dict."""
+    agent = create_resume_agent()
+    result = agent.invoke({"file_path": file_path})
+    output = result["output"]
+
+    # Clean potential markdown code block wrapping
+    output = output.strip()
+    if output.startswith("```"):
+        lines = output.split("\n", 1)
+        output = lines[1] if len(lines) > 1 else output[3:]
+    if output.endswith("```"):
+        output = output.rsplit("```", 1)[0]
+    output = output.strip()
+
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError:
+        return {"raw_output": output, "error": "Failed to parse JSON from agent output"}
