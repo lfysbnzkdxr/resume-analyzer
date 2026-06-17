@@ -8,3 +8,5 @@ data/uploads/
 dist/
 venv/
 CLAUDE.md
+data/benchmark_db/
+eval_report.json

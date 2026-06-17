@@ -72,3 +72,4 @@ class AnalysisResult(BaseModel):
     suggestions: list[Suggestion] = []
     summary: str = ""
     created_at: datetime = Field(default_factory=datetime.now)
+    timing_ms: dict = Field(default_factory=dict)

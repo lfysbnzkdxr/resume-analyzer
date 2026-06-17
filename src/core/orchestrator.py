@@ -1,6 +1,7 @@
 """Analysis orchestrator — coordinates the multi-agent workflow."""
 
 import json
+import time
 
 from src.agents.resume_agent import extract_resume
 from src.agents.jd_agent import analyze_jd
@@ -11,16 +12,25 @@ from src.core.models import AnalysisResult, DimensionScore, Suggestion
 
 def run_single_analysis(pdf_path: str, jd_text: str) -> AnalysisResult:
     """Run a single resume-JD analysis (resume agent → JD agent → matching agent)."""
+    timings = {}
+
     # Step 1: Extract resume info
+    t0 = time.time()
     resume_data = extract_resume(pdf_path)
+    timings["resume_agent_ms"] = round((time.time() - t0) * 1000)
     resume_json_str = json.dumps(resume_data, ensure_ascii=False, indent=2)
 
     # Step 2: Analyze JD
+    t0 = time.time()
     jd_data = analyze_jd(jd_text)
+    timings["jd_agent_ms"] = round((time.time() - t0) * 1000)
     jd_json_str = json.dumps(jd_data, ensure_ascii=False, indent=2)
 
     # Step 3: Evaluate match
+    t0 = time.time()
     match_result = evaluate_match(resume_json_str, jd_json_str)
+    timings["matching_agent_ms"] = round((time.time() - t0) * 1000)
+    timings["total_ms"] = sum(timings.values())
 
     # Step 4: Build result
     dims = []
@@ -49,6 +59,7 @@ def run_single_analysis(pdf_path: str, jd_text: str) -> AnalysisResult:
         dimensions=dims,
         suggestions=suggs,
         summary=match_result.get("summary", ""),
+        timing_ms=timings,
     )
 
 
