@@ -2,6 +2,7 @@
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
 
 from src.agents.resume_agent import extract_resume
 from src.agents.jd_agent import analyze_jd
@@ -10,20 +11,49 @@ from src.agents.library_agent import add_resume_to_library
 from src.core.models import AnalysisResult, DimensionScore, Suggestion
 
 
+def _extract_resume_timed(pdf_path: str) -> tuple:
+    """Run resume extraction with timing. Returns (data, elapsed_ms)."""
+    t0 = time.time()
+    data = extract_resume(pdf_path)
+    elapsed = round((time.time() - t0) * 1000)
+    return data, elapsed
+
+
+def _analyze_jd_timed(jd_text: str) -> tuple:
+    """Run JD analysis with timing. Returns (data, elapsed_ms)."""
+    t0 = time.time()
+    data = analyze_jd(jd_text)
+    elapsed = round((time.time() - t0) * 1000)
+    return data, elapsed
+
+
 def run_single_analysis(pdf_path: str, jd_text: str) -> AnalysisResult:
-    """Run a single resume-JD analysis (resume agent → JD agent → matching agent)."""
+    """Run a single resume-JD analysis (resume agent ∥ JD agent → matching agent)."""
     timings = {}
 
-    # Step 1: Extract resume info
-    t0 = time.time()
-    resume_data = extract_resume(pdf_path)
-    timings["resume_agent_ms"] = round((time.time() - t0) * 1000)
-    resume_json_str = json.dumps(resume_data, ensure_ascii=False, indent=2)
+    # Step 1+2: Resume extraction and JD analysis run in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        resume_future = executor.submit(_extract_resume_timed, pdf_path)
+        jd_future = executor.submit(_analyze_jd_timed, jd_text)
 
-    # Step 2: Analyze JD
-    t0 = time.time()
-    jd_data = analyze_jd(jd_text)
-    timings["jd_agent_ms"] = round((time.time() - t0) * 1000)
+        done, _ = wait(
+            [resume_future, jd_future],
+            return_when=FIRST_EXCEPTION,
+        )
+        # If any future raised, propagate the exception and cancel the other
+        for f in done:
+            exc = f.exception()
+            if exc is not None:
+                resume_future.cancel()
+                jd_future.cancel()
+                raise RuntimeError(
+                    f"Agent execution failed: {'resume' if f is resume_future else 'jd'} agent error"
+                ) from exc
+
+        resume_data, timings["resume_agent_ms"] = resume_future.result()
+        jd_data, timings["jd_agent_ms"] = jd_future.result()
+
+    resume_json_str = json.dumps(resume_data, ensure_ascii=False, indent=2)
     jd_json_str = json.dumps(jd_data, ensure_ascii=False, indent=2)
 
     # Step 3: Evaluate match
