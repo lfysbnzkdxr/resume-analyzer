@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.agents.library_agent import (
     add_resume_to_library,
+    rebuild_library_index,
     list_library_resumes,
     remove_resume_from_library,
     get_library_stats,
@@ -36,7 +37,7 @@ def render():
                 fp.write(f.getbuffer())
 
             with st.spinner(f"处理: {f.name}"):
-                result = add_resume_to_library(pdf_path)
+                result = add_resume_to_library(pdf_path, rebuild=False)
 
             if result["success"]:
                 st.success(f"✅ {f.name} — 已入库 ({result['chunks']} 个文本块)")
@@ -46,6 +47,9 @@ def render():
             Path(pdf_path).unlink(missing_ok=True)
             progress.progress((i + 1) / len(uploaded_files))
 
+        # Build BM25 index once after all files are uploaded
+        with st.spinner("正在构建检索索引..."):
+            rebuild_library_index()
         progress.empty()
         st.rerun()
 

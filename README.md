@@ -8,7 +8,7 @@
 |------|----------|
 | **RAG 检索增强生成** | ChromaDB + fastembed（bge-small-zh-v1.5）本地语义检索 |
 | **Function Calling** | DeepSeek API 工具调用 + LangChain Tool Calling Agent |
-| **多 Agent 协作** | 4 个专用 Agent（提取→分析→匹配→库管理）顺序编排 |
+| **多 Agent 协作** | 4 个专用 Agent（提取∥分析→匹配→库管理）并行编排 |
 | **中文优化 RAG** | PyMuPDF 解析 + 中文断句切片（支持 。和句子边界） + **混合检索** |
 | **语义+关键词混合检索** | ChromaDB 语义搜索 + BM25 关键词匹配 + RRF 融合排序 |
 | **Eval 评估体系** | 多维指标（skill_recall, RMSE, pass_rate）量化分析质量 |
@@ -36,10 +36,11 @@
    └── 库匹配检索 ─┘
          │
          ▼ Orchestrator（流程编排）
-   ┌──────┼──────┐
-   ▼      ▼      ▼
-Resume  JD    Matching
-Agent  Agent   Agent
+   ┌──────┬──────┐           Resume ⟂ JD（并行执行）
+   │      │                  ThreadPoolExecutor
+   ▼      ▼
+Resume  JD
+Agent  Agent —— Matching Agent
    │      │      │
    ▼      ▼      ▼
    工具函数层（PDF解析 / 技能匹配 / 检索）
@@ -55,7 +56,7 @@ Agent  Agent   Agent
 
 - **📄 单份分析** — 上传简历 PDF + 粘贴职位描述，AI 自动提取结构信息并给出多维匹配评分和改进建议
 - **📚 简历库管理** — 批量上传简历，自动切片向量化入库，支持增删管理
-- **🔍 库匹配检索** — 粘贴职位描述，从简历库中语义检索最匹配的候选人，带相似度分数
+- **🔍 库匹配检索** — 粘贴职位描述，从简历库中检索最匹配的候选人，按简历聚合去重（块级别→简历级别），展示语义相似度百分比
 - **📊 多维评分** — 技能、经验、教育、项目四个维度加权评分，可视化展示
 - **💡 改进建议** — 基于差距分析的高/中/低优先级改进建议
 - **✅ Eval 评估** — 量化评估分析质量的测试体系（skill_recall, RMSE, pass_rate）
@@ -195,8 +196,10 @@ python eval/run_eval.py
 ### 混合检索策略
 - 语义搜索使用 bge-small-zh-v1.5 向量化余弦相似度
 - 关键词搜索使用 jieba 分词 + BM25Okapi，精确匹配技能名称
-- Reciprocal Rank Fusion 融合两个结果集，`rank_constant=60`
+- Reciprocal Rank Fusion 融合两个结果集，`rank_constant=60`（用于排序）
 - MMR（λ=0.7）多样化排序，避免同一份简历的切片垄断 Top-N
+- **简历级聚合**：库匹配结果按文件名聚合去重，取每份简历的最佳匹配块作为代表，显示真实余弦相似度而非 RRF 排名值
+- **BM25 脏标记延迟重建**：单文件上传立即重建索引，批量上传逐文件跳过，结束后统一重建一次，避免冗余全量扫描
 
 ### 为什么 4 个 Agent 而非 1 个？
 - 单一 Agent 做所有事：prompt 过长超出上下文、工具数量过多导致选择不准

@@ -1,6 +1,6 @@
 """High-level retriever combining search and formatting."""
 
-from src.rag.vector_store import search_resumes
+from src.rag.vector_store import search_resumes, search_resumes_aggregated
 from src.core.config import TOP_K_RETRIEVAL
 
 
@@ -22,5 +22,13 @@ def retrieve_relevant_context(query: str, top_k: int = TOP_K_RETRIEVAL) -> str:
 
 
 def retrieve_resumes_for_jd(jd_text: str, top_k: int = TOP_K_RETRIEVAL) -> list[dict]:
-    """Search resumes matching a JD and return ranked results."""
+    """Search resumes matching a JD and return chunk-level ranked results."""
     return search_resumes(jd_text, top_k=top_k)
+
+
+def retrieve_resumes_aggregated(jd_text: str, top_k: int = TOP_K_RETRIEVAL) -> list[dict]:
+    """Search resumes matching a JD, aggregated to unique resumes.
+
+    Each result contains: filename, score, best_chunk, matching_chunks.
+    """
+    return search_resumes_aggregated(jd_text, top_k=top_k)

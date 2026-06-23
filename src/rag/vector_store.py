@@ -16,7 +16,7 @@ COLLECTION_NAME = "resume_chunks"
 # BM25 cache (lazy-built, invalidated on write)
 _bm25_index = None  # BM25Okapi instance (lazy)
 _bm25_docs: Optional[list[dict]] = None  # parallel list: {id, text, metadata}
-_bm25_doc_count: int = 0
+_bm25_dirty: bool = True  # True when cache needs rebuild
 
 
 def _tokenize(text: str) -> list[str]:
@@ -28,7 +28,7 @@ def _tokenize(text: str) -> list[str]:
 def _rebuild_bm25_index():
     """Build (or rebuild) the BM25 index from all stored chunks."""
     from rank_bm25 import BM25Okapi
-    global _bm25_index, _bm25_docs, _bm25_doc_count
+    global _bm25_index, _bm25_docs, _bm25_dirty
 
     collection = _get_collection()
     all_data = collection.get(include=["documents", "metadatas"])
@@ -45,13 +45,13 @@ def _rebuild_bm25_index():
     if not docs:
         _bm25_index = None
         _bm25_docs = []
-        _bm25_doc_count = 0
+        _bm25_dirty = False
         return
 
     tokenized_corpus = [_tokenize(d["text"]) for d in docs]
     _bm25_index = BM25Okapi(tokenized_corpus)
     _bm25_docs = docs
-    _bm25_doc_count = len(docs)
+    _bm25_dirty = False
 
 
 def _bm25_search(query: str, top_k: int) -> list[dict]:
@@ -59,10 +59,8 @@ def _bm25_search(query: str, top_k: int) -> list[dict]:
 
     Rebuilds the index if the store has changed since last build.
     """
-    collection = _get_collection()
-    current_count = collection.count()
-    global _bm25_doc_count
-    if _bm25_index is None or current_count != _bm25_doc_count:
+    global _bm25_dirty
+    if _bm25_dirty or _bm25_index is None:
         _rebuild_bm25_index()
 
     if _bm25_index is None or not _bm25_docs:
@@ -109,8 +107,16 @@ def _get_collection(client=None):
     )
 
 
-def add_resume(filename: str, chunks: list[str]) -> int:
-    """Add a resume's chunks to the vector store. Returns chunk count."""
+def add_resume(filename: str, chunks: list[str], rebuild: bool = True) -> int:
+    """Add a resume's chunks to the vector store. Returns chunk count.
+
+    Args:
+        filename: Resume file name.
+        chunks: List of text chunks.
+        rebuild: Rebuild BM25 index immediately after adding.
+                 Set to False during batch uploads, then call
+                 rebuild_bm25_index() once at the end.
+    """
     if not chunks:
         return 0
 
@@ -123,7 +129,23 @@ def add_resume(filename: str, chunks: list[str]) -> int:
 
     collection = _get_collection()
     collection.add(ids=ids, embeddings=vectors, documents=chunks, metadatas=metadatas)
+
+    global _bm25_dirty
+    if rebuild:
+        _rebuild_bm25_index()
+    else:
+        _bm25_dirty = True
+
     return len(chunks)
+
+
+def rebuild_bm25_index():
+    """Explicitly rebuild the BM25 index from all stored chunks.
+
+    Use this after a batch of uploads where each add_resume(rebuild=False)
+    was used, to rebuild the index once at the end instead of per file.
+    """
+    _rebuild_bm25_index()
 
 
 def search_resumes(
@@ -195,7 +217,8 @@ def search_resumes(
     merged = []
     for doc_id in all_ids:
         entry = semantic_hits.get(doc_id) or bm25_hits[doc_id]
-        entry["score"] = _rrf(doc_id)
+        entry["semantic_score"] = entry.get("score", 0)  # 保留语义/Bm25原始分
+        entry["score"] = _rrf(doc_id)                     # RRF 仅用于排序
         merged.append(entry)
 
     merged.sort(key=lambda x: -x["score"])
@@ -211,6 +234,47 @@ def search_resumes(
         h.pop("embedding", None)
 
     return hits
+
+
+def search_resumes_aggregated(
+    query: str,
+    top_k: int = 5,
+    fetch_multiplier: int = 10,
+    **kwargs,
+) -> list[dict]:
+    """Search and aggregate results to resume level.
+
+    Returns top_k unique resumes (by filename), each with:
+      - filename: resume file name
+      - score: max chunk score for this resume
+      - best_chunk: text of the best-matching chunk
+      - matching_chunks: list of all matching chunks for this resume
+    """
+    fetch_k = top_k * fetch_multiplier
+    chunks = search_resumes(query, top_k=fetch_k, **kwargs)
+
+    # Aggregate by filename, keeping max score
+    resume_map: dict[str, dict] = {}
+    for c in chunks:
+        metadata = c.get("metadata") or {}
+        filename = metadata.get("filename", "未知")
+        if filename not in resume_map:
+            resume_map[filename] = {
+                "filename": filename,
+                "score": c["score"],
+                "semantic_score": c.get("semantic_score", 0),
+                "best_chunk": c["text"],
+                "matching_chunks": [c],
+            }
+        else:
+            resume_map[filename]["matching_chunks"].append(c)
+            if c["score"] > resume_map[filename]["score"]:
+                resume_map[filename]["score"] = c["score"]
+                resume_map[filename]["semantic_score"] = c.get("semantic_score", 0)
+                resume_map[filename]["best_chunk"] = c["text"]
+
+    aggregated = sorted(resume_map.values(), key=lambda x: -x["semantic_score"])
+    return aggregated[:top_k]
 
 
 def _mmr_select(
@@ -270,6 +334,7 @@ def list_resumes() -> list[str]:
 
 def delete_resume(filename: str) -> int:
     """Delete all chunks for a given filename. Returns count removed."""
+    global _bm25_dirty
     collection = _get_collection()
     all_data = collection.get(include=["metadatas"])
     to_delete = []
@@ -279,6 +344,7 @@ def delete_resume(filename: str) -> int:
                 to_delete.append(all_data["ids"][i])
     if to_delete:
         collection.delete(ids=to_delete)
+        _bm25_dirty = True
     return len(to_delete)
 
 
