@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from src.agents.base import get_llm
-from src.agents.utils import extract_json
+from src.agents.utils import extract_json, invoke_with_retry
 
 SYSTEM_PROMPT = """你是一个专业的职位描述（JD）分析助手。你的任务是从职位描述文本中提取关键要求。
 
@@ -48,7 +48,4 @@ def create_jd_agent():
 def analyze_jd(jd_text: str) -> dict:
     """Analyze a job description and return structured requirements."""
     agent = create_jd_agent()
-    result = agent.invoke({"jd_text": jd_text})
-    output = result["output"].strip()
-    parsed = extract_json(output)
-    return parsed if parsed else {"raw_output": output, "error": "Failed to parse JSON"}
+    return invoke_with_retry(agent, {"jd_text": jd_text})

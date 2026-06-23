@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from src.agents.base import get_llm
-from src.agents.utils import extract_json
+from src.agents.utils import extract_json, invoke_with_retry
 from src.tools.pdf_parser import parse_resume_pdf
 
 SYSTEM_PROMPT = """你是一个专业的简历解析助手。你的任务是从简历PDF中提取结构化信息。
@@ -51,7 +51,4 @@ def create_resume_agent():
 def extract_resume(file_path: str) -> dict:
     """Extract structured info from a resume PDF. Returns a dict."""
     agent = create_resume_agent()
-    result = agent.invoke({"file_path": file_path})
-    output = result["output"]
-    parsed = extract_json(output)
-    return parsed if parsed else {"raw_output": output, "error": "Failed to parse JSON from agent output"}
+    return invoke_with_retry(agent, {"file_path": file_path})

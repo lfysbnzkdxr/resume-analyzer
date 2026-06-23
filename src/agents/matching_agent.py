@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from src.agents.base import get_llm
-from src.agents.utils import extract_json
+from src.agents.utils import extract_json, invoke_with_retry
 from src.tools.skill_matcher import calculate_skill_overlap
 
 SYSTEM_PROMPT = """你是一个专业的简历匹配评估专家。你的任务是比较简历和职位描述，给出匹配度评分和改进建议。
@@ -67,7 +67,4 @@ def create_matching_agent():
 def evaluate_match(resume_info: str, jd_info: str) -> dict:
     """Evaluate resume-JD match. Returns scores and suggestions."""
     agent = create_matching_agent()
-    result = agent.invoke({"resume_info": resume_info, "jd_info": jd_info})
-    output = result["output"].strip()
-    parsed = extract_json(output)
-    return parsed if parsed else {"raw_output": output, "error": "Failed to parse JSON"}
+    return invoke_with_retry(agent, {"resume_info": resume_info, "jd_info": jd_info})
