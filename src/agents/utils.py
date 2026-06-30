@@ -80,12 +80,18 @@ def invoke_with_retry(
         Parsed JSON dict from the agent output, or an error dict on exhaustion.
     """
     last_error = None
+    t0 = time.perf_counter()
     for attempt in range(max_retries + 1):
         try:
             result = agent_executor.invoke(input_dict)
             output = result["output"]
             parsed = extract_json(output)
             if parsed:
+                elapsed_ms = round((time.perf_counter() - t0) * 1000)
+                logger.info(
+                    "[TIMING] agents.utils.invoke_with_retry (attempt=%d) succeeded in %dms",
+                    attempt + 1, elapsed_ms,
+                )
                 return parsed
             # LLM output was valid text but not parseable JSON — worth a retry
             raise ValueError("Agent returned unparseable JSON output")
@@ -103,6 +109,10 @@ def invoke_with_retry(
                 )
                 time.sleep(delay)
             else:
-                logger.error("Agent invoke exhausted %d retries: %s", max_retries + 1, e)
+                elapsed_ms = round((time.perf_counter() - t0) * 1000)
+                logger.error(
+                    "[TIMING] agents.utils.invoke_with_retry failed after %d attempts in %dms: %s",
+                    max_retries + 1, elapsed_ms, e,
+                )
 
     return {"error": "API 调用失败，请稍后重试", "detail": str(last_error)}

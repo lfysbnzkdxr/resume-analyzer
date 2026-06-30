@@ -119,7 +119,17 @@ def run_single_analysis(pdf_path: str, jd_text: str, api_key: str) -> AnalysisRe
     timings["total_ms"] = sum(timings.values())
 
     # Step 4: Build result
-    return _build_result(match_result, filename, jd_text, timings)
+    filename = Path(pdf_path).name
+    result = _build_result(match_result, filename, jd_text, timings)
+    logger.info(
+        "Analysis complete for '%s': resume_agent=%dms jd_agent=%dms matching=%dms total=%dms",
+        filename,
+        timings.get("resume_agent_ms", 0),
+        timings.get("jd_agent_ms", 0),
+        timings.get("matching_agent_ms", 0),
+        timings.get("total_ms", 0),
+    )
+    return result
 
 
 def run_text_analysis(resume_text: str, resume_filename: str, jd_text: str, api_key: str) -> AnalysisResult:
@@ -158,7 +168,16 @@ def run_text_analysis(resume_text: str, resume_filename: str, jd_text: str, api_
     timings["matching_agent_ms"] = round((time.time() - t0) * 1000)
     timings["total_ms"] = sum(timings.values())
 
-    return _build_result(match_result, resume_filename, jd_text, timings)
+    result = _build_result(match_result, resume_filename, jd_text, timings)
+    logger.info(
+        "Analysis complete for '%s': resume_agent=%dms jd_agent=%dms matching=%dms total=%dms",
+        resume_filename,
+        timings.get("resume_agent_ms", 0),
+        timings.get("jd_agent_ms", 0),
+        timings.get("matching_agent_ms", 0),
+        timings.get("total_ms", 0),
+    )
+    return result
 
 
 def run_library_add(pdf_path: str) -> dict:

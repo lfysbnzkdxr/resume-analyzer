@@ -1,7 +1,9 @@
 """Streamlit main application — multi-page app."""
 
+import functools
+import logging
 import streamlit as st
-import os
+import uuid
 from src.core.config import APP_TITLE, APP_VERSION, DEEPSEEK_API_KEY
 
 PAGES = {
@@ -9,6 +11,22 @@ PAGES = {
     "library_manage": "📚 简历库",
     "library_match": "🔍 库匹配",
 }
+
+logger = logging.getLogger(__name__)
+
+
+def error_boundary(render_fn):
+    """Decorator wrapping page render functions with error ID + user-friendly message."""
+    @functools.wraps(render_fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return render_fn(*args, **kwargs)
+        except Exception:
+            error_id = uuid.uuid4().hex[:8]
+            logger.exception("Page error [%s] in %s", error_id, render_fn.__name__)
+            st.error(f"系统发生内部错误，请稍后重试。错误编号: **{error_id}**")
+            st.stop()
+    return wrapper
 
 
 def _inject_css():
@@ -81,6 +99,7 @@ def main():
     elif page == "library_match":
         from src.ui.pages.library_match import render as r
 
+    r = error_boundary(r)
     r()
 
 

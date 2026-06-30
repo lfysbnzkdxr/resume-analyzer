@@ -1,8 +1,10 @@
 """ChromaDB vector store wrapper for resume chunks."""
 
+import logging
 import uuid
 from pathlib import Path
 import threading
+import time
 import numpy as np
 import chromadb
 from chromadb.config import Settings
@@ -10,6 +12,8 @@ from chromadb.config import Settings
 from typing import Optional
 
 from src.core.config import CHROMA_DIR
+
+logger = logging.getLogger(__name__)
 from src.rag.embeddings import embed_text, embed_texts
 
 COLLECTION_NAME = "resume_chunks"
@@ -135,6 +139,7 @@ def add_resume(filename: str, chunks: list[str], rebuild: bool = True) -> int:
     if not chunks:
         return 0
 
+    t0 = time.perf_counter()
     vectors = embed_texts(chunks)
     ids = [str(uuid.uuid4()) for _ in chunks]
     metadatas = [
@@ -144,6 +149,8 @@ def add_resume(filename: str, chunks: list[str], rebuild: bool = True) -> int:
 
     collection = _get_collection()
     collection.add(ids=ids, embeddings=vectors, documents=chunks, metadatas=metadatas)
+    elapsed_ms = round((time.perf_counter() - t0) * 1000)
+    logger.debug("[TIMING] rag.vector_store.add_resume (%d chunks) embedding+store=%dms", len(chunks), elapsed_ms)
 
     global _bm25_dirty
     with _bm25_lock:
@@ -182,6 +189,7 @@ def search_resumes(
     collection = _get_collection()
 
     # --- Semantic search ---
+    t0 = time.perf_counter()
     query_vector = embed_text(query)
     fetch_k = top_k * 3 if (mmr or hybrid) else top_k
     include = ["documents", "metadatas", "distances"]
@@ -193,6 +201,7 @@ def search_resumes(
         n_results=fetch_k,
         include=include,
     )
+    sem_ms = round((time.perf_counter() - t0) * 1000)
 
     semantic_hits = {}
     if sem_results["ids"] and sem_results["ids"][0]:
@@ -207,7 +216,15 @@ def search_resumes(
             }
 
     # --- BM25 keyword search ---
+    t0 = time.perf_counter()
     bm25_results = _bm25_search(query, top_k=fetch_k)
+    bm25_ms = round((time.perf_counter() - t0) * 1000)
+
+    logger.debug(
+        "[TIMING] rag.vector_store.search_resumes semantic=%dms bm25=%dms total=%dms",
+        sem_ms, bm25_ms, sem_ms + bm25_ms,
+    )
+
     bm25_hits = {r["id"]: r for r in bm25_results}
 
     # --- Fusion: Reciprocal Rank Fusion ---

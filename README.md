@@ -120,12 +120,13 @@ python eval/run_eval.py
 ```
 resume-analyzer/
 ├── src/
-│   ├── main.py                     # 入口
+│   ├── main.py                     # 入口（支持 --version / --healthcheck CLI）
 │   ├── core/
 │   │   ├── config.py               # 配置（RA_* 环境变量覆盖 / 路径 / 参数）
 │   │   ├── models.py               # Pydantic 数据模型
 │   │   ├── orchestrator.py         # 多 Agent 流程编排
-│   │   └── logging_config.py       # 日志配置（RotatingFileHandler）
+│   │   ├── logging_config.py       # 日志配置（RotatingFileHandler）
+│   │   └── healthcheck.py          # 健康检查（ChromaDB/Embedding/API）
 │   ├── agents/
 │   │   ├── base.py                 # LLM 初始化（DeepSeek，api_key 显式传入）
 │   │   ├── resume_agent.py         # 简历信息提取 Agent
@@ -143,7 +144,7 @@ resume-analyzer/
 │   │   ├── pdf_parser.py           # PDF 解析工具（@tool）
 │   │   └── skill_matcher.py        # 技能匹配工具（@tool）
 │   └── ui/
-│       ├── app.py                  # Streamlit 主应用
+│       ├── app.py                  # Streamlit 主应用（含 error_boundary）
 │       ├── theme.py                # 主题常量（颜色/阈值）
 │       ├── pages/
 │       │   ├── single_analysis.py  # 单份分析页面
@@ -165,10 +166,15 @@ resume-analyzer/
 ├── data/
 │   ├── chroma_db/                  # 向量数据库持久化（gitignored）
 │   └── uploads/                    # 临时上传文件（gitignored）
-├── docs/superpowers/specs/
-│   └── 2026-06-16-ai-resume-analyzer-design.md  # 设计文档
+├── docs/
+│   ├── deployment.md               # 部署指南（Docker/Cloud/手动）
+│   └── superpowers/specs/
+│       └── 2026-06-16-ai-resume-analyzer-design.md  # 设计文档
 ├── .github/workflows/ci.yml        # GitHub Actions CI（3.9/3.11/3.12 矩阵）
 ├── .pre-commit-config.yaml         # pre-commit hooks（ruff + 安全检查）
+├── Dockerfile                      # 多阶段 Docker 构建
+├── docker-compose.yml              # Docker Compose（ChromaDB 持久化）
+├── .dockerignore
 ├── Makefile                        # 快捷命令（install/run/test/lint/format）
 ├── .env.example                    # API Key 配置模板
 ├── .gitignore

@@ -1,0 +1,10 @@
+__pycache__/
+.git/
+venv/
+.env
+data/
+.claude/
+tests/
+eval/
+docs/
+*.md
