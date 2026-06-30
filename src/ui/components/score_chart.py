@@ -23,6 +23,26 @@ def display_radar_chart(dimensions: list[dict], overall_score: float):
                     st.write(dim["details"])
 
 
+def display_analysis_result(result):
+    """Display a full analysis result: score chart, suggestions, summary."""
+    st.divider()
+    st.subheader("📊 分析结果")
+
+    dims = [d.model_dump() for d in result.dimensions]
+    suggs = [s.model_dump() for s in result.suggestions]
+
+    display_radar_chart(dims, result.overall_score)
+
+    if suggs:
+        st.divider()
+        st.subheader("💡 改进建议")
+        display_suggestions(suggs)
+
+    st.divider()
+    st.subheader("📝 总结")
+    st.write(result.summary or "（暂无总结）")
+
+
 def _score_color(score: float) -> str:
     if score >= 85:
         return "#22c55e"

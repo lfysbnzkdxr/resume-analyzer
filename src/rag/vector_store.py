@@ -336,16 +336,33 @@ def delete_resume(filename: str) -> int:
     """Delete all chunks for a given filename. Returns count removed."""
     global _bm25_dirty
     collection = _get_collection()
-    all_data = collection.get(include=["metadatas"])
-    to_delete = []
-    if all_data and all_data["ids"] and all_data["metadatas"]:
-        for i, m in enumerate(all_data["metadatas"]):
-            if m and m.get("filename") == filename:
-                to_delete.append(all_data["ids"][i])
-    if to_delete:
-        collection.delete(ids=to_delete)
+    result = collection.delete(where={"filename": filename})
+    deleted = result.get("deleted", 0) if result else 0
+    if deleted:
         _bm25_dirty = True
-    return len(to_delete)
+    return deleted
+
+
+def get_resume_text(filename: str) -> str:
+    """Retrieve the full concatenated text of a resume from the vector store."""
+    collection = _get_collection()
+    results = collection.get(
+        where={"filename": filename},
+        include=["documents", "metadatas"],
+    )
+    if not results or not results["ids"]:
+        return ""
+    # Sort by chunk_index to preserve original order
+    chunks = sorted(
+        [
+            (m.get("chunk_index", i), d)
+            for i, (d, m) in enumerate(
+                zip(results["documents"], results["metadatas"])
+            )
+        ],
+        key=lambda x: x[0],
+    )
+    return "\n".join(text for _, text in chunks)
 
 
 def get_resume_count() -> int:

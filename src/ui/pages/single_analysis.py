@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from src.core.orchestrator import run_single_analysis
-from src.ui.components.score_chart import display_radar_chart, display_suggestions
+from src.ui.components.score_chart import display_analysis_result
 
 
 def render():
@@ -52,19 +52,4 @@ def render():
 
 
 def _display_result(result):
-    st.divider()
-    st.subheader("📊 分析结果")
-
-    dims = [d.model_dump() for d in result.dimensions]
-    suggs = [s.model_dump() for s in result.suggestions]
-
-    display_radar_chart(dims, result.overall_score)
-
-    if suggs:
-        st.divider()
-        st.subheader("💡 改进建议")
-        display_suggestions(suggs)
-
-    st.divider()
-    st.subheader("📝 总结")
-    st.write(result.summary or "（暂无总结）")
+    display_analysis_result(result)
