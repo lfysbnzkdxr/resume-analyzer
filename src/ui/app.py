@@ -60,7 +60,6 @@ def main():
             help="输入你的 DeepSeek API Key，不会保存到代码中",
         )
         if api_key:
-            os.environ["DEEPSEEK_API_KEY"] = api_key
             st.session_state["DEEPSEEK_API_KEY"] = api_key
 
         st.divider()

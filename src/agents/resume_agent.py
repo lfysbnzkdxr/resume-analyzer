@@ -1,6 +1,5 @@
 """Resume Extractor Agent — extracts structured info from a PDF resume."""
 
-import json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 

@@ -78,9 +78,12 @@ def _bm25_search(query: str, top_k: int) -> list[dict]:
         tokenized_query = _tokenize(query)
         scores = _bm25_index.get_scores(tokenized_query)
 
-    # Pair scores with docs and sort (no lock needed — local copies after lock release)
+        # Snapshot docs inside the lock to avoid TOCTOU race
+        docs_snapshot = list(_bm25_docs)
+
+    # Pair scores with docs and sort (use local snapshot after lock release)
     ranked = sorted(
-        [(scores[i], _bm25_docs[i]) for i in range(len(_bm25_docs))],
+        [(scores[i], docs_snapshot[i]) for i in range(len(docs_snapshot))],
         key=lambda x: -x[0],
     )
 

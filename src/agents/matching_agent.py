@@ -1,6 +1,5 @@
 """Matching & Evaluation Agent — compares resume against JD and generates scores."""
 
-import json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 

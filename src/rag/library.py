@@ -1,4 +1,11 @@
-"""Library Agent — manages the resume library (add, list, delete, search)."""
+"""Library Manager — manages the resume library (add, list, delete, search).
+
+This module is a thin application-layer wrapper around the RAG pipeline.
+It does NOT involve any LLM/Agent calls — it only orchestrates PDF loading,
+text splitting, and vector store operations.
+"""
+
+from pathlib import Path
 
 from src.rag.loader import load_pdf
 from src.rag.splitter import split_text

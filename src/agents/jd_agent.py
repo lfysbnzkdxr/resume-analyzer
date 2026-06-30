@@ -1,6 +1,5 @@
 """JD Analyzer Agent — extracts structured requirements from job descriptions."""
 
-import json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 

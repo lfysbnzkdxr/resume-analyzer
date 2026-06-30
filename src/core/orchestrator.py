@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
 from src.agents.resume_agent import extract_resume, extract_resume_from_text
 from src.agents.jd_agent import analyze_jd
 from src.agents.matching_agent import evaluate_match
-from src.agents.library_agent import add_resume_to_library
+from src.rag.library import add_resume_to_library
 from src.core.models import AnalysisResult, DimensionScore, Suggestion
 
 

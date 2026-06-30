@@ -1,8 +1,11 @@
 """PDF parsing tool for LangChain agents."""
 
+import logging
 from pathlib import Path
 from langchain_core.tools import tool
 from src.rag.loader import load_pdf_with_metadata
+
+logger = logging.getLogger(__name__)
 
 
 @tool
@@ -22,7 +25,7 @@ def parse_resume_pdf(file_path: str) -> str:
             info = f"文件名: {result['filename']}\n页数: {result['page_count']}\n\n"
             return info + text
     except Exception:
-        pass
+        logger.warning("PyMuPDF failed to parse %s, falling back to raw text", file_path, exc_info=True)
 
     # Fallback: read as raw text (for test files, eval, etc.)
     try:
@@ -30,6 +33,6 @@ def parse_resume_pdf(file_path: str) -> str:
         if raw.strip():
             return f"文件名: {path.name}\n(文本回退模式)\n\n{raw}"
     except Exception:
-        pass
+        logger.warning("Raw text fallback also failed for %s", file_path, exc_info=True)
 
     return f"错误：无法解析文件 {file_path}"

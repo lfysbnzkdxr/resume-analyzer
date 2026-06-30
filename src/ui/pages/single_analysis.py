@@ -1,11 +1,15 @@
 """Single analysis page — upload a resume PDF + paste JD text, run analysis."""
 
+import logging
 import streamlit as st
 import os
 from pathlib import Path
 
+from src.core.config import UPLOAD_DIR
 from src.core.orchestrator import run_single_analysis
 from src.ui.components.score_chart import display_analysis_result
+
+logger = logging.getLogger(__name__)
 
 
 def render():
@@ -19,9 +23,8 @@ def render():
         pdf_path = None
         if uploaded_file:
             st.success(f"✅ {uploaded_file.name}")
-            tmp_dir = Path("data/uploads")
-            tmp_dir.mkdir(parents=True, exist_ok=True)
-            pdf_path = str(tmp_dir / uploaded_file.name)
+            UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+            pdf_path = str(UPLOAD_DIR / uploaded_file.name)
             with open(pdf_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
@@ -45,6 +48,7 @@ def render():
                 result = run_single_analysis(pdf_path, jd_text)
                 _display_result(result)
             except Exception as e:
+                logger.exception("Analysis failed for %s", pdf_path)
                 st.error(f"分析过程出错: {str(e)}")
             finally:
                 if pdf_path and os.path.exists(pdf_path):

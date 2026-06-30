@@ -1,15 +1,19 @@
 """Library management page — upload/list/delete resumes in the vector store."""
 
+import logging
 import streamlit as st
 from pathlib import Path
 
-from src.agents.library_agent import (
+from src.core.config import UPLOAD_DIR
+from src.rag.library import (
     add_resume_to_library,
     rebuild_library_index,
     list_library_resumes,
     remove_resume_from_library,
     get_library_stats,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def render():
@@ -27,12 +31,11 @@ def render():
     )
 
     if uploaded_files:
-        tmp_dir = Path("data/uploads")
-        tmp_dir.mkdir(parents=True, exist_ok=True)
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
         progress = st.progress(0, text="处理中...")
 
         for i, f in enumerate(uploaded_files):
-            pdf_path = str(tmp_dir / f.name)
+            pdf_path = str(UPLOAD_DIR / f.name)
             with open(pdf_path, "wb") as fp:
                 fp.write(f.getbuffer())
 

@@ -1,22 +1,28 @@
 """Base agent class with shared DeepSeek LLM setup."""
 
 import os
+from typing import Optional
 
 from langchain_openai import ChatOpenAI
 from src.core.config import DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
 
 
-def get_llm(temperature: float = 0.0):
+def get_llm(temperature: float = 0.0, api_key: Optional[str] = None):
     """Get a configured DeepSeek LLM instance (OpenAI-compatible API).
 
-    Reads the API key from st.session_state first (Streamlit per-user isolation),
-    falling back to os.environ for non-Streamlit contexts (eval, testing).
+    Args:
+        temperature: LLM temperature (0.0 = deterministic).
+        api_key: DeepSeek API key. If None, reads from st.session_state
+                 (Streamlit), then os.environ (eval/testing).
+
+    Priority: explicit api_key > st.session_state > os.environ
     """
-    try:
-        import streamlit as st
-        api_key = st.session_state.get("DEEPSEEK_API_KEY", "")
-    except Exception:
-        api_key = ""
+    if not api_key:
+        try:
+            import streamlit as st
+            api_key = st.session_state.get("DEEPSEEK_API_KEY", "")
+        except Exception:
+            api_key = ""
     if not api_key:
         api_key = os.getenv("DEEPSEEK_API_KEY", "")
     return ChatOpenAI(
