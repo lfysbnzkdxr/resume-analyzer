@@ -58,7 +58,7 @@ def test_pdf_creation():
 
 def test_upload_to_library(pdf_path: str):
     """Step 2: Upload the test PDF to the ChromaDB library."""
-    from src.agents.library_agent import add_resume_to_library, get_library_stats
+    from src.rag.library import add_resume_to_library, get_library_stats
 
     result = add_resume_to_library(pdf_path)
     assert result["success"], f"Upload failed: {result.get('error')}"
@@ -107,7 +107,7 @@ def test_semantic_search():
 
 def test_cleanup(pdf_path: str):
     """Step 5: Clean up test data."""
-    from src.agents.library_agent import remove_resume_from_library
+    from src.rag.library import remove_resume_from_library
 
     filename = Path(pdf_path).name
     removed = remove_resume_from_library(filename)

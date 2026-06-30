@@ -1,11 +1,12 @@
 """Logging configuration for resume-analyzer.
 
-Configures root logger with console + file handlers.
+Configures root logger with console + rotating file handlers.
 Call setup_logging() once at application startup.
 """
 
 import logging
 import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
 
@@ -41,9 +42,11 @@ def setup_logging(
     console.setFormatter(formatter)
     root.addHandler(console)
 
-    # File handler
+    # File handler with rotation (5 MB per file, keep 3 backups)
     file_path = str(Path(log_dir) / log_file)
-    file_handler = logging.FileHandler(file_path, encoding="utf-8")
+    file_handler = RotatingFileHandler(
+        file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+    )
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)

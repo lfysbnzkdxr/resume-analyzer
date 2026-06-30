@@ -4,7 +4,7 @@ import os
 from typing import Optional
 
 from langchain_openai import ChatOpenAI
-from src.core.config import DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
+from src.core.config import DEEPSEEK_BASE_URL, DEEPSEEK_MODEL, API_TIMEOUT
 
 
 def get_llm(temperature: float = 0.0, api_key: Optional[str] = None):
@@ -30,6 +30,6 @@ def get_llm(temperature: float = 0.0, api_key: Optional[str] = None):
         temperature=temperature,
         api_key=api_key,
         base_url=DEEPSEEK_BASE_URL,
-        timeout=60,          # 单次请求超时（秒），避免无限挂起
+        timeout=API_TIMEOUT,  # 单次请求超时（秒），避免无限挂起
         max_retries=2,       # HTTP 层面重试（LangChain 内置 tenacity）
     )

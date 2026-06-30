@@ -2,8 +2,9 @@
 
 import os
 from fastembed import TextEmbedding
+from src.core.config import HF_ENDPOINT
 
-os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+os.environ.setdefault("HF_ENDPOINT", HF_ENDPOINT)
 
 _embedder = None
 
