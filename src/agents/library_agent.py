@@ -20,7 +20,7 @@ def add_resume_to_library(file_path: str, rebuild: bool = True) -> dict:
         return {"success": False, "error": "PDF 内容为空或无法解析", "chunks": 0}
 
     chunks = split_text(text, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-    filename = file_path.replace("\\", "/").split("/")[-1]
+    filename = Path(file_path).name
     count = add_resume(filename, chunks, rebuild=rebuild)
     return {
         "success": True,

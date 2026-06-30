@@ -9,10 +9,16 @@ from src.core.config import DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
 def get_llm(temperature: float = 0.0):
     """Get a configured DeepSeek LLM instance (OpenAI-compatible API).
 
-    Reads the API key from os.environ at call time so Streamlit sidebar input
-    (which sets os.environ["DEEPSEEK_API_KEY"]) takes effect without restart.
+    Reads the API key from st.session_state first (Streamlit per-user isolation),
+    falling back to os.environ for non-Streamlit contexts (eval, testing).
     """
-    api_key = os.getenv("DEEPSEEK_API_KEY", "")
+    try:
+        import streamlit as st
+        api_key = st.session_state.get("DEEPSEEK_API_KEY", "")
+    except Exception:
+        api_key = ""
+    if not api_key:
+        api_key = os.getenv("DEEPSEEK_API_KEY", "")
     return ChatOpenAI(
         model=DEEPSEEK_MODEL,
         temperature=temperature,

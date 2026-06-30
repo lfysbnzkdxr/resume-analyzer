@@ -61,6 +61,7 @@ def main():
         )
         if api_key:
             os.environ["DEEPSEEK_API_KEY"] = api_key
+            st.session_state["DEEPSEEK_API_KEY"] = api_key
 
         st.divider()
 

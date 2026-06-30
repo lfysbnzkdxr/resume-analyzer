@@ -2,6 +2,7 @@
 
 import uuid
 from pathlib import Path
+import threading
 import numpy as np
 import chromadb
 from chromadb.config import Settings
@@ -17,6 +18,12 @@ COLLECTION_NAME = "resume_chunks"
 _bm25_index = None  # BM25Okapi instance (lazy)
 _bm25_docs: Optional[list[dict]] = None  # parallel list: {id, text, metadata}
 _bm25_dirty: bool = True  # True when cache needs rebuild
+
+# ChromaDB client singleton (lazy-initialized)
+_client = None
+
+# BM25 thread safety
+_bm25_lock = threading.Lock()
 
 
 def _tokenize(text: str) -> list[str]:
@@ -58,18 +65,20 @@ def _bm25_search(query: str, top_k: int) -> list[dict]:
     """Search via BM25 keyword matching.
 
     Rebuilds the index if the store has changed since last build.
+    Thread-safe via _bm25_lock.
     """
     global _bm25_dirty
-    if _bm25_dirty or _bm25_index is None:
-        _rebuild_bm25_index()
+    with _bm25_lock:
+        if _bm25_dirty or _bm25_index is None:
+            _rebuild_bm25_index()
 
-    if _bm25_index is None or not _bm25_docs:
-        return []
+        if _bm25_index is None or not _bm25_docs:
+            return []
 
-    tokenized_query = _tokenize(query)
-    scores = _bm25_index.get_scores(tokenized_query)
+        tokenized_query = _tokenize(query)
+        scores = _bm25_index.get_scores(tokenized_query)
 
-    # Pair scores with docs and sort
+    # Pair scores with docs and sort (no lock needed — local copies after lock release)
     ranked = sorted(
         [(scores[i], _bm25_docs[i]) for i in range(len(_bm25_docs))],
         key=lambda x: -x[0],
@@ -89,12 +98,15 @@ def _bm25_search(query: str, top_k: int) -> list[dict]:
 
 
 def _get_client():
-    """Get or create the persistent ChromaDB client."""
-    CHROMA_DIR.mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(
-        path=str(CHROMA_DIR),
-        settings=Settings(anonymized_telemetry=False),
-    )
+    """Get or create the persistent ChromaDB client (singleton)."""
+    global _client
+    if _client is None:
+        CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+        _client = chromadb.PersistentClient(
+            path=str(CHROMA_DIR),
+            settings=Settings(anonymized_telemetry=False),
+        )
+    return _client
 
 
 def _get_collection(client=None):
@@ -131,10 +143,11 @@ def add_resume(filename: str, chunks: list[str], rebuild: bool = True) -> int:
     collection.add(ids=ids, embeddings=vectors, documents=chunks, metadatas=metadatas)
 
     global _bm25_dirty
-    if rebuild:
-        _rebuild_bm25_index()
-    else:
-        _bm25_dirty = True
+    with _bm25_lock:
+        if rebuild:
+            _rebuild_bm25_index()
+        else:
+            _bm25_dirty = True
 
     return len(chunks)
 
@@ -288,8 +301,6 @@ def _mmr_select(
     Iteratively picks candidates that balance query relevance against
     similarity to already-selected results.
     """
-    import numpy as np
-
     query_vec = np.array(query_embedding)
     q_norm = np.linalg.norm(query_vec)
     if q_norm > 0:
@@ -339,7 +350,8 @@ def delete_resume(filename: str) -> int:
     result = collection.delete(where={"filename": filename})
     deleted = result.get("deleted", 0) if result else 0
     if deleted:
-        _bm25_dirty = True
+        with _bm25_lock:
+            _bm25_dirty = True
     return deleted
 
 

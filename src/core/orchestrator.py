@@ -2,6 +2,7 @@
 
 import json
 import time
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
 
 from src.agents.resume_agent import extract_resume, extract_resume_from_text
@@ -88,7 +89,7 @@ def run_single_analysis(pdf_path: str, jd_text: str) -> AnalysisResult:
             content=s.get("content", ""),
         ))
 
-    filename = pdf_path.replace("\\", "/").split("/")[-1]
+    filename = Path(pdf_path).name
 
     return AnalysisResult(
         resume_filename=filename,
@@ -163,17 +164,6 @@ def run_text_analysis(resume_text: str, resume_filename: str, jd_text: str) -> A
         summary=match_result.get("summary", ""),
         timing_ms=timings,
     )
-
-
-def run_library_search(jd_text: str) -> dict:
-    """Search resume library for best matches to a JD."""
-    from src.tools.search import search_resumes_for_jd
-
-    results = search_resumes_for_jd(jd_text)
-    return {
-        "results": results,
-        "total": len(results),
-    }
 
 
 def run_library_add(pdf_path: str) -> dict:
