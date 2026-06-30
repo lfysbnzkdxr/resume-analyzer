@@ -80,8 +80,10 @@ python -m venv venv
 # Windows: venv\Scripts\activate
 # macOS/Linux: source venv/bin/activate
 
-# 3. 安装依赖
-pip install -r requirements.txt
+# 3. 安装依赖（含 dev 可选依赖）
+pip install -e ".[dev]"
+# 或使用 Makefile:
+# make install
 
 # 4. 配置 API Key
 # 方式 A：复制 .env 文件
@@ -94,11 +96,18 @@ cp .env.example .env
 ### 运行
 
 ```bash
-# 确保在项目根目录
 streamlit run src/main.py
+# 或: make run
 ```
 
 浏览器打开 `http://localhost:8501`，在侧边栏输入 DeepSeek API Key 即可使用。
+
+### 运行测试
+
+```bash
+pytest -v
+# 或: make test
+```
 
 ### 运行 Eval 评估
 
@@ -113,35 +122,42 @@ resume-analyzer/
 ├── src/
 │   ├── main.py                     # 入口
 │   ├── core/
-│   │   ├── config.py               # 配置（路径 / API / 参数）
+│   │   ├── config.py               # 配置（RA_* 环境变量覆盖 / 路径 / 参数）
 │   │   ├── models.py               # Pydantic 数据模型
-│   │   └── orchestrator.py         # 多 Agent 流程编排
+│   │   ├── orchestrator.py         # 多 Agent 流程编排
+│   │   └── logging_config.py       # 日志配置（RotatingFileHandler）
 │   ├── agents/
-│   │   ├── base.py                 # LLM 初始化（DeepSeek）
+│   │   ├── base.py                 # LLM 初始化（DeepSeek，api_key 显式传入）
 │   │   ├── resume_agent.py         # 简历信息提取 Agent
 │   │   ├── jd_agent.py             # 职位描述分析 Agent
 │   │   ├── matching_agent.py       # 匹配评估 Agent
-│   │   ├── library_agent.py        # 简历库管理 Agent
-│   │   └── utils.py                # JSON 提取工具
+│   │   └── utils.py                # JSON 提取工具 + 重试逻辑
 │   ├── rag/
 │   │   ├── loader.py               # PDF 解析（PyMuPDF）
 │   │   ├── splitter.py             # 中文断句切片
 │   │   ├── embeddings.py           # Embedding 封装（fastembed）
 │   │   ├── vector_store.py         # ChromaDB 向量存储 + BM25 混合检索
-│   │   └── retriever.py            # 检索结果格式化
+│   │   ├── retriever.py            # 检索结果格式化
+│   │   └── library.py              # 简历库管理（add/list/delete/stats）
 │   ├── tools/
 │   │   ├── pdf_parser.py           # PDF 解析工具（@tool）
 │   │   └── skill_matcher.py        # 技能匹配工具（@tool）
 │   └── ui/
 │       ├── app.py                  # Streamlit 主应用
+│       ├── theme.py                # 主题常量（颜色/阈值）
 │       ├── pages/
 │       │   ├── single_analysis.py  # 单份分析页面
 │       │   ├── library_manage.py   # 简历库管理页面
 │       │   └── library_match.py    # 库匹配检索页面
 │       └── components/
-│           ├── score_chart.py      # 评分图表组件
-│           ├── suggestion_card.py  # 建议卡片组件
-│           └── resume_preview.py   # 简历预览组件
+│           └── score_chart.py      # 评分图表组件
+├── tests/
+│   ├── conftest.py                 # pytest 配置
+│   ├── test_skill_matcher.py       # 技能匹配单元测试
+│   ├── test_models.py              # Pydantic 模型验证
+│   ├── test_extract_json.py        # JSON 提取边界测试
+│   ├── test_splitter.py            # 中文分块测试
+│   └── test_rag_pipeline.py        # RAG 端到端测试
 ├── eval/
 │   ├── test_cases.py               # 5 个评估测试用例
 │   ├── metrics.py                  # 评估指标计算
@@ -151,6 +167,9 @@ resume-analyzer/
 │   └── uploads/                    # 临时上传文件（gitignored）
 ├── docs/superpowers/specs/
 │   └── 2026-06-16-ai-resume-analyzer-design.md  # 设计文档
+├── .github/workflows/ci.yml        # GitHub Actions CI（3.9/3.11/3.12 矩阵）
+├── .pre-commit-config.yaml         # pre-commit hooks（ruff + 安全检查）
+├── Makefile                        # 快捷命令（install/run/test/lint/format）
 ├── .env.example                    # API Key 配置模板
 ├── .gitignore
 ├── pyproject.toml

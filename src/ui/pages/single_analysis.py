@@ -5,7 +5,7 @@ import streamlit as st
 import os
 from pathlib import Path
 
-from src.core.config import UPLOAD_DIR
+from src.core.config import UPLOAD_DIR, MAX_UPLOAD_SIZE_MB
 from src.core.orchestrator import run_single_analysis
 from src.ui.components.score_chart import display_analysis_result
 
@@ -22,6 +22,10 @@ def render():
         uploaded_file = st.file_uploader("上传简历 (PDF)", type=["pdf"], key="single_pdf")
         pdf_path = None
         if uploaded_file:
+            if uploaded_file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024:
+                st.error(f"文件过大（{uploaded_file.size / 1024 / 1024:.1f}MB），限制 {MAX_UPLOAD_SIZE_MB}MB")
+                uploaded_file = None
+                st.stop()
             st.success(f"✅ {uploaded_file.name}")
             UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
             pdf_path = str(UPLOAD_DIR / uploaded_file.name)
@@ -45,7 +49,7 @@ def render():
 
         with st.spinner("AI 分析中...（简历提取 → JD 分析 → 匹配评估）"):
             try:
-                result = run_single_analysis(pdf_path, jd_text)
+                result = run_single_analysis(pdf_path, jd_text, st.session_state["DEEPSEEK_API_KEY"])
                 _display_result(result)
             except Exception as e:
                 logger.exception("Analysis failed for %s", pdf_path)

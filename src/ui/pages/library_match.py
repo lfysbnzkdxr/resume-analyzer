@@ -5,6 +5,7 @@ from src.rag.retriever import retrieve_resumes_aggregated
 from src.rag.vector_store import get_resume_text
 from src.core.orchestrator import run_text_analysis
 from src.ui.components.score_chart import display_analysis_result
+from src.ui.theme import score_color
 
 
 def render():
@@ -43,7 +44,7 @@ def render():
         pct = max(0, min(int(score * 100), 100))
         chunk_count = len(r["matching_chunks"])
 
-        color = "#22c55e" if pct >= 80 else "#eab308" if pct >= 60 else "#ef4444"
+        color = score_color(pct)
         st.markdown(
             f"""<div style="padding:12px;margin:8px 0;border:1px solid #e5e7eb;border-radius:8px;">
                 <div style="display:flex;justify-content:space-between;">
@@ -72,7 +73,7 @@ def render():
                         st.error(f"无法从库中读取简历: {filename}")
                         st.stop()
 
-                    result = run_text_analysis(resume_text, filename, jd_text)
+                    result = run_text_analysis(resume_text, filename, jd_text, st.session_state["DEEPSEEK_API_KEY"])
                     st.session_state["match_analysis"] = {
                         "filename": filename,
                         "result": result,

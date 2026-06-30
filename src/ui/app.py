@@ -2,7 +2,7 @@
 
 import streamlit as st
 import os
-from src.core.config import APP_TITLE, DEEPSEEK_API_KEY
+from src.core.config import APP_TITLE, APP_VERSION, DEEPSEEK_API_KEY
 
 PAGES = {
     "single_analysis": "📄 单份分析",
@@ -67,7 +67,7 @@ def main():
         page = st.radio("导航", options=list(PAGES.keys()), format_func=lambda k: PAGES[k])
 
         st.divider()
-        st.caption("AI 简历智能分析 v0.1")
+        st.caption(f"AI 简历智能分析 v{APP_VERSION}")
         st.caption("基于 DeepSeek + RAG + 多 Agent 协作")
 
     if not api_key and not DEEPSEEK_API_KEY:

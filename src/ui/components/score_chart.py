@@ -1,6 +1,7 @@
 """Score visualization components using Streamlit native charts."""
 
 import streamlit as st
+from src.ui.theme import score_color
 
 
 def display_radar_chart(dimensions: list[dict], overall_score: float):
@@ -44,12 +45,7 @@ def display_analysis_result(result):
 
 
 def _score_color(score: float) -> str:
-    if score >= 85:
-        return "#22c55e"
-    elif score >= 65:
-        return "#eab308"
-    else:
-        return "#ef4444"
+    return score_color(score)
 
 
 def display_suggestions(suggestions: list[dict]):

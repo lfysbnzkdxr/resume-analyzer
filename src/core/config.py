@@ -48,3 +48,5 @@ HF_ENDPOINT = _get_env("RA_HF_ENDPOINT", "https://hf-mirror.com")
 
 # App
 APP_TITLE = "AI 简历智能分析"
+APP_VERSION = "0.2.0"
+MAX_UPLOAD_SIZE_MB = 10

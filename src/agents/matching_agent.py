@@ -44,9 +44,9 @@ dimensions 的 weight 总和必须为 1.0。
 只返回 JSON，不要包含 markdown 代码块标记或其他说明文字。"""
 
 
-def create_matching_agent():
+def create_matching_agent(api_key: str):
     """Create and return a Matching & Evaluation agent executor."""
-    llm = get_llm()
+    llm = get_llm(api_key=api_key)
     tools = [calculate_skill_overlap]
 
     prompt = ChatPromptTemplate.from_messages([
@@ -63,7 +63,7 @@ def create_matching_agent():
     return AgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
 
 
-def evaluate_match(resume_info: str, jd_info: str) -> dict:
+def evaluate_match(resume_info: str, jd_info: str, api_key: str) -> dict:
     """Evaluate resume-JD match. Returns scores and suggestions."""
-    agent = create_matching_agent()
+    agent = create_matching_agent(api_key)
     return invoke_with_retry(agent, {"resume_info": resume_info, "jd_info": jd_info})

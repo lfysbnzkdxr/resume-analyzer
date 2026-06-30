@@ -4,7 +4,7 @@ import logging
 import streamlit as st
 from pathlib import Path
 
-from src.core.config import UPLOAD_DIR
+from src.core.config import UPLOAD_DIR, MAX_UPLOAD_SIZE_MB
 from src.rag.library import (
     add_resume_to_library,
     rebuild_library_index,
@@ -35,6 +35,9 @@ def render():
         progress = st.progress(0, text="处理中...")
 
         for i, f in enumerate(uploaded_files):
+            if f.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024:
+                st.error(f"{f.name} 过大（{f.size / 1024 / 1024:.1f}MB），跳过（限制 {MAX_UPLOAD_SIZE_MB}MB）")
+                continue
             pdf_path = str(UPLOAD_DIR / f.name)
             with open(pdf_path, "wb") as fp:
                 fp.write(f.getbuffer())

@@ -3,12 +3,14 @@
 import json
 import time
 import logging
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
+
+from langchain.agents import AgentExecutor
 
 logger = logging.getLogger(__name__)
 
 
-def extract_json(text: str) -> Optional[Union[dict, list]]:
+def extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """Extract JSON from LLM output, handling conversational prefixes."""
     if not text:
         return None
@@ -56,7 +58,12 @@ def extract_json(text: str) -> Optional[Union[dict, list]]:
     return None
 
 
-def invoke_with_retry(agent_executor, input_dict: dict, max_retries: int = 3, base_delay: float = 2.0) -> dict:
+def invoke_with_retry(
+    agent_executor: AgentExecutor,
+    input_dict: Dict[str, str],
+    max_retries: int = 3,
+    base_delay: float = 2.0,
+) -> Dict[str, Any]:
     """Invoke a LangChain AgentExecutor with exponential-backoff retry.
 
     Handles transient failures: rate limits, server errors, timeouts, connection

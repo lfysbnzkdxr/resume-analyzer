@@ -6,6 +6,7 @@ boundaries, so each chunk contains semantically complete content
 """
 
 import re
+from typing import List
 
 # Common resume section header patterns (Chinese + English)
 SECTION_HEADERS = re.compile(
@@ -29,7 +30,7 @@ SECTION_HEADERS = re.compile(
 )
 
 
-def _find_section_boundaries(text: str) -> list[int]:
+def _find_section_boundaries(text: str) -> List[int]:
     """Find all section start positions (character indices)."""
     boundaries = [0]  # first section starts at 0
     for m in SECTION_HEADERS.finditer(text):
@@ -39,7 +40,7 @@ def _find_section_boundaries(text: str) -> list[int]:
     return sorted(set(boundaries))
 
 
-def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50):
+def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[str]:
     """Split text into chunks, using resume section headers as natural boundaries.
 
     Small sections (个人信息, 个人总结, 技能) are merged into a single chunk.
@@ -90,7 +91,7 @@ def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50):
     return merged if merged else [text.strip()]
 
 
-def _sub_split(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
+def _sub_split(text: str, chunk_size: int, chunk_overlap: int) -> List[str]:
     """Fallback: split a single long text using sentence boundaries (original logic)."""
     separators = ["\n\n", "\n", "。", ".", " ", ""]
     chunks = []
