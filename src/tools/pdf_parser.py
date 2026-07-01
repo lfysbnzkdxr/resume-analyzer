@@ -2,7 +2,9 @@
 
 import logging
 from pathlib import Path
+
 from langchain_core.tools import tool
+
 from src.rag.loader import load_pdf_with_metadata
 
 logger = logging.getLogger(__name__)

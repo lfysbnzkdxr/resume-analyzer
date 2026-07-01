@@ -9,7 +9,7 @@ def test_direct_dict():
 
 
 def test_direct_array():
-    result = extract_json('[1, 2, 3]')
+    result = extract_json("[1, 2, 3]")
     assert result == [1, 2, 3]
 
 
@@ -24,19 +24,19 @@ def test_markdown_code_block_no_lang():
 
 
 def test_conversational_prefix():
-    text = "Based on the resume, here is the analysis:\n\n```json\n{\"skills\": [\"python\"]}\n```"
+    text = 'Based on the resume, here is the analysis:\n\n```json\n{"skills": ["python"]}\n```'
     result = extract_json(text)
     assert result == {"skills": ["python"]}
 
 
 def test_curly_braces_in_text():
-    text = "The result is: {\"name\": \"test\"}. Let me know if you need changes."
+    text = 'The result is: {"name": "test"}. Let me know if you need changes.'
     result = extract_json(text)
     assert result == {"name": "test"}
 
 
 def test_array_in_text():
-    text = "Skills: [\"python\", \"java\"]"
+    text = 'Skills: ["python", "java"]'
     result = extract_json(text)
     assert result == ["python", "java"]
 
@@ -55,7 +55,7 @@ def test_nested_json():
 
 
 def test_invalid_json_braces():
-    result = extract_json('{invalid')
+    result = extract_json("{invalid")
     assert result is None
 
 
@@ -64,8 +64,8 @@ def test_multiple_json_objects():
     This is a known limitation — the function finds { to last } which
     spans both objects, creating invalid JSON. Marked as expected failure.
     """
-    import pytest
-    text = "some text { \"a\": 1 } more text { \"b\": 2 }"
+
+    text = 'some text { "a": 1 } more text { "b": 2 }'
     result = extract_json(text)
     # Either returns dict or None — both are acceptable
     if result is not None:

@@ -7,10 +7,16 @@ text splitting, and vector store operations.
 
 from pathlib import Path
 
+from src.core.config import CHUNK_OVERLAP, CHUNK_SIZE
 from src.rag.loader import load_pdf
 from src.rag.splitter import split_text
-from src.rag.vector_store import add_resume, list_resumes, delete_resume, get_resume_count, rebuild_bm25_index
-from src.core.config import CHUNK_SIZE, CHUNK_OVERLAP
+from src.rag.vector_store import (
+    add_resume,
+    delete_resume,
+    get_resume_count,
+    list_resumes,
+    rebuild_bm25_index,
+)
 
 
 def add_resume_to_library(file_path: str, rebuild: bool = True) -> dict:

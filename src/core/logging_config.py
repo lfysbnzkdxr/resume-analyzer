@@ -44,9 +44,7 @@ def setup_logging(
 
     # File handler with rotation (5 MB per file, keep 3 backups)
     file_path = str(Path(log_dir) / log_file)
-    file_handler = RotatingFileHandler(
-        file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-    )
+    file_handler = RotatingFileHandler(file_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)

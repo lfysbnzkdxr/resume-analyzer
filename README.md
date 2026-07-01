@@ -158,7 +158,7 @@ resume-analyzer/
 │   ├── test_models.py              # Pydantic 模型验证
 │   ├── test_extract_json.py        # JSON 提取边界测试
 │   ├── test_splitter.py            # 中文分块测试
-│   └── test_rag_pipeline.py        # RAG 端到端测试
+│   ├── rag_pipeline_check.py       # RAG 端到端验证（手动运行）
 ├── eval/
 │   ├── test_cases.py               # 5 个评估测试用例
 │   ├── metrics.py                  # 评估指标计算

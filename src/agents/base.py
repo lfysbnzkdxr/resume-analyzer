@@ -1,7 +1,8 @@
 """Base agent class with shared DeepSeek LLM setup."""
 
 from langchain_openai import ChatOpenAI
-from src.core.config import DEEPSEEK_BASE_URL, DEEPSEEK_MODEL, API_TIMEOUT
+
+from src.core.config import API_TIMEOUT, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
 
 
 def get_llm(api_key: str, temperature: float = 0.0):

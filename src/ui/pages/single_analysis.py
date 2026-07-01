@@ -1,11 +1,11 @@
 """Single analysis page — upload a resume PDF + paste JD text, run analysis."""
 
 import logging
-import streamlit as st
 import os
-from pathlib import Path
 
-from src.core.config import UPLOAD_DIR, MAX_UPLOAD_SIZE_MB
+import streamlit as st
+
+from src.core.config import MAX_UPLOAD_SIZE_MB, UPLOAD_DIR
 from src.core.orchestrator import run_single_analysis
 from src.ui.components.score_chart import display_analysis_result
 

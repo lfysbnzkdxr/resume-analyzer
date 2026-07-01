@@ -3,46 +3,51 @@
 import json
 import logging
 import time
+from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, wait
 from pathlib import Path
-from typing import Any, Dict, List
-from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
+from typing import Any
 
-from src.agents.resume_agent import extract_resume, extract_resume_from_text
 from src.agents.jd_agent import analyze_jd
 from src.agents.matching_agent import evaluate_match
-from src.rag.library import add_resume_to_library
+from src.agents.resume_agent import extract_resume, extract_resume_from_text
 from src.core.models import AnalysisResult, DimensionScore, Suggestion
+from src.rag.library import add_resume_to_library
 
 logger = logging.getLogger(__name__)
 
 
 def _build_result(
-    match_result: Dict[str, Any],
+    match_result: dict[str, Any],
     resume_filename: str,
     jd_text: str,
-    timings: Dict[str, int],
+    timings: dict[str, int],
 ) -> AnalysisResult:
     """Validate LLM output and build AnalysisResult with Pydantic."""
     import logging
+
     _logger = logging.getLogger(__name__)
 
     try:
         dims = []
         for d in match_result.get("dimensions", []):
-            dims.append(DimensionScore(
-                name=d.get("name", ""),
-                score=d.get("score", 0),
-                weight=d.get("weight", 0),
-                details=d.get("details", ""),
-            ))
+            dims.append(
+                DimensionScore(
+                    name=d.get("name", ""),
+                    score=d.get("score", 0),
+                    weight=d.get("weight", 0),
+                    details=d.get("details", ""),
+                )
+            )
 
         suggs = []
         for s in match_result.get("suggestions", []):
-            suggs.append(Suggestion(
-                category=s.get("category", ""),
-                priority=s.get("priority", ""),
-                content=s.get("content", ""),
-            ))
+            suggs.append(
+                Suggestion(
+                    category=s.get("category", ""),
+                    priority=s.get("priority", ""),
+                    content=s.get("content", ""),
+                )
+            )
 
         return AnalysisResult(
             resume_filename=resume_filename,

@@ -1,14 +1,14 @@
 """Application entry point — CLI, healthcheck, and Streamlit launcher."""
 
 import argparse
-import sys
 import logging
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.core.logging_config import setup_logging
 from src.core.config import APP_VERSION
+from src.core.logging_config import setup_logging
 from src.ui.app import main
 
 setup_logging()
@@ -36,6 +36,7 @@ def cli() -> int:
 
     if args.healthcheck:
         from src.core.healthcheck import main as healthcheck_main
+
         return healthcheck_main()
 
     logger.info("Starting resume-analyzer")

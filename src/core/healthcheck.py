@@ -9,18 +9,18 @@ import json
 import logging
 import sys
 import time
-from typing import Dict, Tuple
 
 from src.core.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
 
 logger = logging.getLogger(__name__)
 
 
-def check_chromadb() -> Tuple[bool, str]:
+def check_chromadb() -> tuple[bool, str]:
     """Check ChromaDB connectivity by initializing client and calling heartbeat."""
     try:
         import chromadb
         from chromadb.config import Settings
+
         from src.core.config import CHROMA_DIR
 
         CHROMA_DIR.mkdir(parents=True, exist_ok=True)
@@ -34,7 +34,7 @@ def check_chromadb() -> Tuple[bool, str]:
         return False, f"ChromaDB check failed: {e}"
 
 
-def check_embeddings() -> Tuple[bool, str]:
+def check_embeddings() -> tuple[bool, str]:
     """Check embedding model loads and produces output."""
     try:
         from src.rag.embeddings import embed_text
@@ -47,7 +47,7 @@ def check_embeddings() -> Tuple[bool, str]:
         return False, f"Embedding check failed: {e}"
 
 
-def check_deepseek_api() -> Tuple[bool, str]:
+def check_deepseek_api() -> tuple[bool, str]:
     """Check DeepSeek API connectivity (only if API key is configured)."""
     if not DEEPSEEK_API_KEY:
         return True, "DeepSeek API: skipped (no key configured)"
@@ -61,7 +61,7 @@ def check_deepseek_api() -> Tuple[bool, str]:
         return False, f"DeepSeek API check failed: {e}"
 
 
-def run_checks() -> Tuple[bool, Dict[str, dict]]:
+def run_checks() -> tuple[bool, dict[str, dict]]:
     """Run all health checks and return (overall_status, details)."""
     checks = {
         "chromadb": check_chromadb(),
@@ -69,7 +69,7 @@ def run_checks() -> Tuple[bool, Dict[str, dict]]:
         "deepseek_api": check_deepseek_api(),
     }
 
-    details: Dict[str, dict] = {}
+    details: dict[str, dict] = {}
     all_ok = True
     for name, (ok, msg) in checks.items():
         details[name] = {"passed": ok, "message": msg}

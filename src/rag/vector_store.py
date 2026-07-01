@@ -1,20 +1,19 @@
 """ChromaDB vector store wrapper for resume chunks."""
 
 import logging
-import uuid
-from pathlib import Path
 import threading
 import time
-import numpy as np
-import chromadb
-from chromadb.config import Settings
-
+import uuid
 from typing import Optional
 
+import chromadb
+import numpy as np
+from chromadb.config import Settings
+
 from src.core.config import CHROMA_DIR
+from src.rag.embeddings import embed_text, embed_texts
 
 logger = logging.getLogger(__name__)
-from src.rag.embeddings import embed_text, embed_texts
 
 COLLECTION_NAME = "resume_chunks"
 
@@ -33,12 +32,14 @@ _bm25_lock = threading.Lock()
 def _tokenize(text: str) -> list[str]:
     """Chinese-aware tokenization using jieba for BM25."""
     import jieba
+
     return list(jieba.cut(text))
 
 
 def _rebuild_bm25_index():
     """Build (or rebuild) the BM25 index from all stored chunks."""
     from rank_bm25 import BM25Okapi
+
     global _bm25_index, _bm25_docs, _bm25_dirty
 
     collection = _get_collection()
@@ -47,11 +48,13 @@ def _rebuild_bm25_index():
     docs = []
     if all_data and all_data["ids"]:
         for i in range(len(all_data["ids"])):
-            docs.append({
-                "id": all_data["ids"][i],
-                "text": all_data["documents"][i],
-                "metadata": all_data["metadatas"][i] if all_data.get("metadatas") else {},
-            })
+            docs.append(
+                {
+                    "id": all_data["ids"][i],
+                    "text": all_data["documents"][i],
+                    "metadata": all_data["metadatas"][i] if all_data.get("metadatas") else {},
+                }
+            )
 
     if not docs:
         _bm25_index = None
@@ -95,12 +98,14 @@ def _bm25_search(query: str, top_k: int) -> list[dict]:
     max_score = max((s for s, _ in ranked), default=1)
     results = []
     for score, doc in ranked[:top_k]:
-        results.append({
-            "id": doc["id"],
-            "text": doc["text"],
-            "metadata": doc["metadata"],
-            "score": score / max_score if max_score > 0 else 0,
-        })
+        results.append(
+            {
+                "id": doc["id"],
+                "text": doc["text"],
+                "metadata": doc["metadata"],
+                "score": score / max_score if max_score > 0 else 0,
+            }
+        )
     return results
 
 
@@ -142,10 +147,7 @@ def add_resume(filename: str, chunks: list[str], rebuild: bool = True) -> int:
     t0 = time.perf_counter()
     vectors = embed_texts(chunks)
     ids = [str(uuid.uuid4()) for _ in chunks]
-    metadatas = [
-        {"filename": filename, "chunk_index": i, "chunk_count": len(chunks)}
-        for i in range(len(chunks))
-    ]
+    metadatas = [{"filename": filename, "chunk_index": i, "chunk_count": len(chunks)} for i in range(len(chunks))]
 
     collection = _get_collection()
     collection.add(ids=ids, embeddings=vectors, documents=chunks, metadatas=metadatas)
@@ -222,7 +224,9 @@ def search_resumes(
 
     logger.debug(
         "[TIMING] rag.vector_store.search_resumes semantic=%dms bm25=%dms total=%dms",
-        sem_ms, bm25_ms, sem_ms + bm25_ms,
+        sem_ms,
+        bm25_ms,
+        sem_ms + bm25_ms,
     )
 
     bm25_hits = {r["id"]: r for r in bm25_results}
@@ -232,16 +236,12 @@ def search_resumes(
 
     def _rrf(match_id: str, rank_constant: int = 60) -> float:
         score = 0.0
-        for rank, hit_id in enumerate(
-            s["id"] for s in sorted(semantic_hits.values(), key=lambda x: -x["score"])
-        ):
+        for rank, hit_id in enumerate(s["id"] for s in sorted(semantic_hits.values(), key=lambda x: -x["score"])):
             if hit_id == match_id:
                 score += 1.0 / (rank_constant + rank)
                 break
         if hybrid:
-            for rank, hit_id in enumerate(
-                b["id"] for b in sorted(bm25_hits.values(), key=lambda x: -x["score"])
-            ):
+            for rank, hit_id in enumerate(b["id"] for b in sorted(bm25_hits.values(), key=lambda x: -x["score"])):
                 if hit_id == match_id:
                     score += 1.0 / (rank_constant + rank)
                     break
@@ -251,7 +251,7 @@ def search_resumes(
     for doc_id in all_ids:
         entry = semantic_hits.get(doc_id) or bm25_hits[doc_id]
         entry["semantic_score"] = entry.get("score", 0)  # 保留语义/Bm25原始分
-        entry["score"] = _rrf(doc_id)                     # RRF 仅用于排序
+        entry["score"] = _rrf(doc_id)  # RRF 仅用于排序
         merged.append(entry)
 
     merged.sort(key=lambda x: -x["score"])
@@ -386,12 +386,7 @@ def get_resume_text(filename: str) -> str:
         return ""
     # Sort by chunk_index to preserve original order
     chunks = sorted(
-        [
-            (m.get("chunk_index", i), d)
-            for i, (d, m) in enumerate(
-                zip(results["documents"], results["metadatas"])
-            )
-        ],
+        [(m.get("chunk_index", i), d) for i, (d, m) in enumerate(zip(results["documents"], results["metadatas"]))],
         key=lambda x: x[0],
     )
     return "\n".join(text for _, text in chunks)

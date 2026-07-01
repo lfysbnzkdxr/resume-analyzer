@@ -1,9 +1,10 @@
 """Library match page — paste a JD, search for best matching resumes."""
 
 import streamlit as st
+
+from src.core.orchestrator import run_text_analysis
 from src.rag.retriever import retrieve_resumes_aggregated
 from src.rag.vector_store import get_resume_text
-from src.core.orchestrator import run_text_analysis
 from src.ui.components.score_chart import display_analysis_result
 from src.ui.theme import score_color
 
@@ -59,7 +60,7 @@ def render():
                 </div>
                 <details>
                     <summary>查看最佳匹配片段</summary>
-                    <pre style="font-size:13px;margin-top:8px;">{r['best_chunk'][:500]}</pre>
+                    <pre style="font-size:13px;margin-top:8px;">{r["best_chunk"][:500]}</pre>
                 </details>
             </div>""",
             unsafe_allow_html=True,

@@ -1,14 +1,14 @@
 """Pydantic models for the resume analyzer."""
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class Skill(BaseModel):
     name: str
-    level: str = "unknown"          # proficient / familiar / basic
-    importance: str = "unknown"     # must / plus
+    level: str = "unknown"  # proficient / familiar / basic
+    importance: str = "unknown"  # must / plus
 
 
 class Experience(BaseModel):
@@ -32,6 +32,7 @@ class Project(BaseModel):
 
 class ResumeInfo(BaseModel):
     """Structured information extracted from a resume PDF."""
+
     personal_info: dict = {}
     summary: str = ""
     skills: list[str] = []
@@ -42,6 +43,7 @@ class ResumeInfo(BaseModel):
 
 class JDRequirements(BaseModel):
     """Structured information extracted from a job description."""
+
     role_name: str = ""
     required_skills: list[Skill] = []
     preferred_skills: list[Skill] = []
@@ -58,13 +60,14 @@ class DimensionScore(BaseModel):
 
 
 class Suggestion(BaseModel):
-    category: str = ""   # skill_gap / presentation / format / experience
-    priority: str = ""   # high / medium / low
+    category: str = ""  # skill_gap / presentation / format / experience
+    priority: str = ""  # high / medium / low
     content: str = ""
 
 
 class AnalysisResult(BaseModel):
     """Full analysis result combining resume and JD."""
+
     resume_filename: str = ""
     jd_text: str = ""
     overall_score: float = Field(ge=0, le=100, default=0)

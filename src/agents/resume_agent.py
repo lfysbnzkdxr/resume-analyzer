@@ -1,10 +1,10 @@
 """Resume Extractor Agent — extracts structured info from a PDF resume."""
 
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from src.agents.base import get_llm
-from src.agents.utils import extract_json, invoke_with_retry
+from src.agents.utils import invoke_with_retry
 from src.tools.pdf_parser import parse_resume_pdf
 
 SYSTEM_PROMPT = """你是一个专业的简历解析助手。你的任务是从简历PDF中提取结构化信息。
@@ -37,11 +37,13 @@ def create_resume_agent(api_key: str):
     llm = get_llm(api_key=api_key)
     tools = [parse_resume_pdf]
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT),
-        ("human", "请分析这份简历 PDF：{file_path}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", SYSTEM_PROMPT),
+            ("human", "请分析这份简历 PDF：{file_path}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     agent = create_tool_calling_agent(llm, tools, prompt)
     return AgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
@@ -75,11 +77,13 @@ TEXT_SYSTEM_PROMPT = """你是一个专业的简历解析助手。你的任务�
 def create_text_resume_agent(api_key: str):
     """Create a resume agent that extracts from raw text (no PDF tool needed)."""
     llm = get_llm(api_key=api_key)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", TEXT_SYSTEM_PROMPT),
-        ("human", "请分析这份简历文本：\n\n{resume_text}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", TEXT_SYSTEM_PROMPT),
+            ("human", "请分析这份简历文本：\n\n{resume_text}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
     agent = create_tool_calling_agent(llm, [], prompt)
     return AgentExecutor(agent=agent, tools=[], verbose=False, handle_parsing_errors=True)
 

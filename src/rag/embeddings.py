@@ -1,7 +1,9 @@
 """Local embedding model wrapper using fastembed (pure ONNX, no torch conflicts)."""
 
 import os
+
 from fastembed import TextEmbedding
+
 from src.core.config import HF_ENDPOINT
 
 os.environ.setdefault("HF_ENDPOINT", HF_ENDPOINT)

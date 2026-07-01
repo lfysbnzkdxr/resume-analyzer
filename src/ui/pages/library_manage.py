@@ -1,16 +1,17 @@
 """Library management page — upload/list/delete resumes in the vector store."""
 
 import logging
-import streamlit as st
 from pathlib import Path
 
-from src.core.config import UPLOAD_DIR, MAX_UPLOAD_SIZE_MB
+import streamlit as st
+
+from src.core.config import MAX_UPLOAD_SIZE_MB, UPLOAD_DIR
 from src.rag.library import (
     add_resume_to_library,
-    rebuild_library_index,
-    list_library_resumes,
-    remove_resume_from_library,
     get_library_stats,
+    list_library_resumes,
+    rebuild_library_index,
+    remove_resume_from_library,
 )
 
 logger = logging.getLogger(__name__)

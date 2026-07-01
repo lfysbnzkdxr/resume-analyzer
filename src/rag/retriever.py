@@ -1,7 +1,7 @@
 """High-level retriever combining search and formatting."""
 
-from src.rag.vector_store import search_resumes, search_resumes_aggregated
 from src.core.config import TOP_K_RETRIEVAL
+from src.rag.vector_store import search_resumes, search_resumes_aggregated
 
 
 def retrieve_resumes_for_jd(jd_text: str, top_k: int = TOP_K_RETRIEVAL) -> list[dict]:

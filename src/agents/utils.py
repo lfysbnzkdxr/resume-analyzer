@@ -1,16 +1,16 @@
 """Shared utilities for agent outputs — JSON extraction and retry logic."""
 
 import json
-import time
 import logging
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Any, Optional, Union
 
 from langchain.agents import AgentExecutor
 
 logger = logging.getLogger(__name__)
 
 
-def extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
+def extract_json(text: str) -> Optional[Union[dict[str, Any], list[Any]]]:
     """Extract JSON from LLM output, handling conversational prefixes."""
     if not text:
         return None
@@ -39,7 +39,7 @@ def extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1 and end > start:
-        candidate = text[start:end+1]
+        candidate = text[start : end + 1]
         try:
             return json.loads(candidate)
         except json.JSONDecodeError:
@@ -49,7 +49,7 @@ def extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
     start = text.find("[")
     end = text.rfind("]")
     if start != -1 and end != -1 and end > start:
-        candidate = text[start:end+1]
+        candidate = text[start : end + 1]
         try:
             return json.loads(candidate)
         except json.JSONDecodeError:
@@ -60,10 +60,10 @@ def extract_json(text: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
 
 def invoke_with_retry(
     agent_executor: AgentExecutor,
-    input_dict: Dict[str, str],
+    input_dict: dict[str, str],
     max_retries: int = 3,
     base_delay: float = 2.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Invoke a LangChain AgentExecutor with exponential-backoff retry.
 
     Handles transient failures: rate limits, server errors, timeouts, connection
@@ -90,7 +90,8 @@ def invoke_with_retry(
                 elapsed_ms = round((time.perf_counter() - t0) * 1000)
                 logger.info(
                     "[TIMING] agents.utils.invoke_with_retry (attempt=%d) succeeded in %dms",
-                    attempt + 1, elapsed_ms,
+                    attempt + 1,
+                    elapsed_ms,
                 )
                 return parsed
             # LLM output was valid text but not parseable JSON — worth a retry
@@ -102,17 +103,22 @@ def invoke_with_retry(
             if any(kw in msg for kw in ("401", "unauthorized", "invalid_api_key", "invalid api key")):
                 raise
             if attempt < max_retries:
-                delay = base_delay * (2 ** attempt)
+                delay = base_delay * (2**attempt)
                 logger.warning(
                     "Agent invoke failed (attempt %d/%d): %s. Retrying in %.1fs...",
-                    attempt + 1, max_retries + 1, e, delay,
+                    attempt + 1,
+                    max_retries + 1,
+                    e,
+                    delay,
                 )
                 time.sleep(delay)
             else:
                 elapsed_ms = round((time.perf_counter() - t0) * 1000)
                 logger.error(
                     "[TIMING] agents.utils.invoke_with_retry failed after %d attempts in %dms: %s",
-                    max_retries + 1, elapsed_ms, e,
+                    max_retries + 1,
+                    elapsed_ms,
+                    e,
                 )
 
     return {"error": "API 调用失败，请稍后重试", "detail": str(last_error)}

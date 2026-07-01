@@ -42,6 +42,7 @@ def test_pdf_creation():
     pdf_path = PROJECT_ROOT / "data" / "test_rag_李四.pdf"
     # Create a valid PDF using PyMuPDF (fitz) directly
     import fitz
+
     doc = fitz.open()
     page = doc.new_page()
     page.insert_text((50, 50), content, fontsize=10)
@@ -90,12 +91,14 @@ def test_semantic_search():
     print(f"[OK] Top result: score={r['score']:.4f}, file={r['metadata'].get('filename')}")
 
     # Verify the top result is our test resume
-    assert "test_rag_李四" in r["metadata"].get("filename", ""), \
+    assert "test_rag_李四" in r["metadata"].get("filename", ""), (
         f"Top result is not our test resume: {r['metadata'].get('filename')}"
+    )
     print("✅ Top result is our test resume — relevance verified")
 
     # Also test retrieval via high-level function
     from src.rag.retriever import retrieve_resumes_for_jd
+
     jd_results = retrieve_resumes_for_jd("我们需要Java后端开发，熟悉Spring Boot、MySQL", top_k=3)
     assert len(jd_results) > 0, "JD-based retrieval returned no results!"
     jd_score = jd_results[0]["score"]

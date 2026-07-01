@@ -2,8 +2,10 @@
 
 import functools
 import logging
-import streamlit as st
 import uuid
+
+import streamlit as st
+
 from src.core.config import APP_TITLE, APP_VERSION, DEEPSEEK_API_KEY
 
 PAGES = {
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def error_boundary(render_fn):
     """Decorator wrapping page render functions with error ID + user-friendly message."""
+
     @functools.wraps(render_fn)
     def wrapper(*args, **kwargs):
         try:
@@ -26,12 +29,14 @@ def error_boundary(render_fn):
             logger.exception("Page error [%s] in %s", error_id, render_fn.__name__)
             st.error(f"系统发生内部错误，请稍后重试。错误编号: **{error_id}**")
             st.stop()
+
     return wrapper
 
 
 def _inject_css():
     """注入 CSS 隐藏 Streamlit 内置英文 UI 元素。"""
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 /* 隐藏 Streamlit 底部信息 */
 footer { display: none !important; }
@@ -60,7 +65,9 @@ footer { display: none !important; }
     font-size: 12px;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
 
 def main():

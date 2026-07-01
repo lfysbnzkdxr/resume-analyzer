@@ -1,6 +1,6 @@
 """Tests for Chinese resume text splitter."""
 
-from src.rag.splitter import split_text, _find_section_boundaries
+from src.rag.splitter import _find_section_boundaries, split_text
 
 
 class TestFindSectionBoundaries:
@@ -47,9 +47,14 @@ class TestSplitText:
         """Each chunk should not exceed chunk_size significantly."""
         text = (
             "个人信息：张三\n\n"
-            + "技能：" + "a" * 300 + "\n\n"
-            + "工作经验：" + "b" * 300 + "\n\n"
-            + "项目经验：" + "c" * 300
+            + "技能："
+            + "a" * 300
+            + "\n\n"
+            + "工作经验："
+            + "b" * 300
+            + "\n\n"
+            + "项目经验："
+            + "c" * 300
         )
         chunks = split_text(text, chunk_size=200, chunk_overlap=20)
         for c in chunks:
